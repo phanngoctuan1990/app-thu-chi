@@ -1,5 +1,5 @@
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbzRm_JXjKdAE-tKJaxClQlEcwkGlPoe96d7tUItncUquLW5UgfQMein_30UxX8hbB-YGA/exec'
+  'https://script.google.com/macros/s/AKfycbzjmLNHnz5aiZkRVnyCgVSXK8kQRhKhBP6QZFkZYL9J0cC1SP_j_AFEMB6UxJtxTZJ7xA/exec'
 
 export interface Transaction {
   date: string     // "YYYY-MM-DD"
@@ -28,11 +28,26 @@ export interface Summary {
   categories: Record<string, number>
 }
 
-export async function fetchSummary(): Promise<Summary> {
-  const res = await fetch(`${API_URL}?action=summary`)
+export interface TxRecord {
+  day: number
+  category: string
+  note: string
+  amount: number  // negative = chi tiêu, positive = thu nhập
+}
+
+export async function fetchSummary(month?: number): Promise<Summary> {
+  const m = month ?? new Date().getMonth() + 1
+  const res = await fetch(`${API_URL}?action=summary&month=${m}`)
   const json = await res.json()
   if (json.error) throw new Error(json.error)
   return json as Summary
+}
+
+export async function fetchTransactions(month: number): Promise<TxRecord[]> {
+  const res = await fetch(`${API_URL}?action=transactions&month=${month}`)
+  const json = await res.json()
+  if (json.error) throw new Error(json.error)
+  return (json.transactions ?? []) as TxRecord[]
 }
 
 export async function addTransaction(data: Transaction): Promise<void> {
