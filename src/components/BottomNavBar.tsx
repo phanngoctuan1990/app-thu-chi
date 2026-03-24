@@ -2,8 +2,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 const NAV_ITEMS = [
   { path: '/', icon: 'home', label: 'Trang chủ' },
-  { path: '/input', icon: 'dashboard', label: 'Nhập' },
-  { path: '/history', icon: 'schedule', label: 'Lịch sử' },
+  { path: '/input', icon: 'add_circle', label: 'Nhập' },
+  { path: '/history', icon: 'receipt_long', label: 'Lịch sử' },
 ]
 
 export default function BottomNavBar() {
@@ -19,19 +19,25 @@ export default function BottomNavBar() {
             <button
               key={path}
               onClick={() => navigate(path)}
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-full transition-all duration-200 active:scale-90 ${
-                isActive
-                  ? 'bg-primary-container/20 text-primary'
-                  : 'text-outline hover:bg-surface-container'
+              className={`relative flex flex-col items-center gap-1 px-4 py-2 rounded-full transition-all duration-200 active:scale-90 ${
+                isActive ? 'text-primary' : 'text-outline hover:bg-surface-container'
               }`}
             >
               <span
-                className="material-symbols-outlined text-[22px]"
+                className={`material-symbols-outlined text-[22px] transition-transform duration-200 ${isActive ? 'scale-110' : ''}`}
                 style={isActive ? { fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" } : undefined}
               >
                 {icon}
               </span>
-              <span className="font-label text-[9px] uppercase tracking-widest">{label}</span>
+              <span className={`font-label text-[9px] uppercase tracking-widest transition-all duration-200 ${isActive ? 'font-bold text-primary' : ''}`}>
+                {label}
+              </span>
+              {isActive && (
+                <span
+                  className="absolute bottom-2 w-8 h-0.5 rounded-full bg-primary"
+                  style={{ animation: 'nav-indicator-in 0.2s ease both' }}
+                />
+              )}
             </button>
           )
         })}
