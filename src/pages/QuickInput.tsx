@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import TopAppBar from '../components/TopAppBar'
-import { addTransaction } from '../services/api'
-import { formatVND } from '../utils/formatCurrency'
+import { addTransaction, fetchSummary } from '../services/api'
+import { formatVND, formatVNDShort } from '../utils/formatCurrency'
 
 // ─── Category definitions ────────────────────────────────────────────────────
 
@@ -125,7 +125,12 @@ export default function QuickInput() {
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [shake, setShake] = useState(false)
+  const [totalSpent, setTotalSpent] = useState<number | null>(null)
   const hiddenInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    fetchSummary().then(s => setTotalSpent(s.totalSpent)).catch(() => {})
+  }, [])
 
   const amount = rawAmount ? parseInt(rawAmount, 10) : 0
   const today = new Date().toISOString().split('T')[0]
@@ -198,7 +203,9 @@ export default function QuickInput() {
           <p className="font-body text-on-surface-variant text-sm font-medium">Xin chào!</p>
           <h2 className="font-headline font-extrabold text-xl leading-tight mt-1">
             Tổng chi tháng này:{' '}
-            <span className="font-label text-primary">5,4M VND</span>
+            <span className="font-label text-primary">
+              {totalSpent === null ? '...' : `${formatVNDShort(totalSpent)} VND`}
+            </span>
           </h2>
         </section>
 
