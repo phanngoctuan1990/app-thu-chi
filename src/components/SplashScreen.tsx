@@ -13,17 +13,23 @@ export default function SplashScreen({ onDone }: Props) {
   useEffect(() => {
     const month = new Date().getMonth() + 1
 
-    // Fake progress to show activity (0 → 70% in 1.2s)
+    // Animate progress 0 → 90% over ~2.7s, jumps to 100% when done
     const ticker = setInterval(() => {
       setProgress(p => {
-        if (p >= 70) { clearInterval(ticker); return 70 }
-        return p + 4
+        if (p >= 90) { clearInterval(ticker); return 90 }
+        return p + 1
       })
-    }, 60)
+    }, 30)
 
     // Fetch real data
     setStatus('Đang tải dữ liệu...')
-    Promise.all([fetchSummary(month), fetchTransactions(month)])
+    const MIN_DURATION = 3000
+
+    Promise.all([
+      fetchSummary(month),
+      fetchTransactions(month),
+      new Promise(resolve => setTimeout(resolve, MIN_DURATION)),
+    ])
       .then(() => {
         clearInterval(ticker)
         setProgress(100)
