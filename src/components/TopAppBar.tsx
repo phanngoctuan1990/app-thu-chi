@@ -8,8 +8,13 @@ export default function TopAppBar({ title }: TopAppBarProps) {
       <div className="flex justify-between items-center px-6 py-4">
         {/* Avatar + Title */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden flex items-center justify-center">
-            <span className="material-symbols-outlined text-outline">person</span>
+          <div className="w-10 h-10 rounded-[12px] bg-primary/10 flex items-center justify-center">
+            <span
+              className="material-symbols-outlined text-primary text-[22px]"
+              style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}
+            >
+              account_balance_wallet
+            </span>
           </div>
           <h1 className="font-headline font-bold text-xl tracking-tight text-primary">
             {title}
