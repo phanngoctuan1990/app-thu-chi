@@ -1,5 +1,10 @@
-/* Material Symbols — local font (no CDN dependency) */
+/* Material Symbols — local font, force block display to avoid text flash */
 @import 'material-symbols/outlined.css';
+
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  font-display: block;
+}
 
 @tailwind base;
 @tailwind components;
@@ -14,8 +19,9 @@
 
   html {
     scroll-behavior: smooth;
-    /* Prevent pull-to-refresh on iOS */
     overscroll-behavior-y: none;
+    /* Prevent horizontal scroll */
+    overflow-x: hidden;
   }
 
   body {
@@ -24,7 +30,7 @@
     font-family: 'Inter', sans-serif;
     margin: 0;
     overscroll-behavior-y: none;
-    /* Prevent text size adjustment on orientation change */
+    overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
   }
 

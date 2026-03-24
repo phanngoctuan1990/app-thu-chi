@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import TopAppBar from '../components/TopAppBar'
 import { addTransaction, fetchSummary } from '../services/api'
-import { formatVND, formatVNDShort } from '../utils/formatCurrency'
+import { formatVNDShort } from '../utils/formatCurrency'
 
 // ─── Category definitions ────────────────────────────────────────────────────
 
@@ -133,6 +133,11 @@ export default function QuickInput() {
   }, [])
 
   const amount = rawAmount ? parseInt(rawAmount, 10) : 0
+  const formatted = amount > 0 ? new Intl.NumberFormat('vi-VN').format(amount) : '0'
+  const amountSize = formatted.length <= 6 ? 'text-7xl'
+    : formatted.length <= 9  ? 'text-5xl'
+    : formatted.length <= 12 ? 'text-4xl'
+    : 'text-3xl'
   const today = new Date().toISOString().split('T')[0]
 
   function showToast(message: string, type: 'success' | 'error') {
@@ -216,11 +221,11 @@ export default function QuickInput() {
             shake ? 'animate-[shake_0.4s_ease-in-out]' : ''
           }`}
         >
-          <div className="flex items-baseline gap-2">
-            <span className="font-label font-bold text-7xl tracking-tighter text-on-surface leading-none">
-              {amount > 0 ? formatVND(amount) : '0'}
+          <div className="flex items-baseline gap-2 w-full justify-center overflow-hidden">
+            <span className={`font-label font-bold ${amountSize} tracking-tighter text-on-surface leading-none truncate`}>
+              {formatted}
             </span>
-            <span className="font-label text-2xl font-medium text-outline">VND</span>
+            <span className="font-label text-xl font-medium text-outline shrink-0">VND</span>
           </div>
           <div className={`h-1 rounded-full transition-all duration-300 ${amount > 0 ? 'w-16 bg-primary/40' : 'w-12 bg-primary/20'}`} />
         </section>
