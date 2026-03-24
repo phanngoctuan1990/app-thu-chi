@@ -1,5 +1,5 @@
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbzjmLNHnz5aiZkRVnyCgVSXK8kQRhKhBP6QZFkZYL9J0cC1SP_j_AFEMB6UxJtxTZJ7xA/exec'
+  'https://script.google.com/macros/s/AKfycbyPBtR7lBSzB9HABJTjefrhSN5Y0FukU32yiH3WKUrqdlDClWHj_NLMMcwZhwwCn13tQA/exec'
 
 export interface Transaction {
   date: string     // "YYYY-MM-DD"
