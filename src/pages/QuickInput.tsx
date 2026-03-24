@@ -144,7 +144,7 @@ export default function QuickInput() {
 
   // Amount suggestions: multiply digits by 10k, 100k, 1M, 10M
   const suggestions: number[] = rawAmount
-    ? [10000, 100000, 1000000, 10000000]
+    ? [1000, 10000, 100000, 1000000]
         .map(m => parseInt(rawAmount, 10) * m)
         .filter(v => v <= 100000000)
     : []
