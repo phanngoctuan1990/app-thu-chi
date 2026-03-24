@@ -58,6 +58,19 @@ export function cacheInvalidate(month: number) {
   localStorage.removeItem(`transactions_${month}`)
 }
 
+export function cacheRemoveTx(month: number, tx: TxRecord) {
+  const key = `transactions_${month}`
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return
+    const { data, ts } = JSON.parse(raw)
+    const filtered = (data as TxRecord[]).filter(t =>
+      !(t.day === tx.day && t.note === tx.note && t.amount === tx.amount && t.category === tx.category)
+    )
+    localStorage.setItem(key, JSON.stringify({ data: filtered, ts }))
+  } catch {}
+}
+
 // ─── Fetchers with cache ──────────────────────────────────────────────────────
 
 export async function fetchSummary(month?: number): Promise<Summary> {
@@ -82,6 +95,23 @@ export async function fetchTransactions(month: number): Promise<TxRecord[]> {
   const txs = (json.transactions ?? []) as TxRecord[]
   cacheSet(key, txs)
   return txs
+}
+
+export async function deleteTransaction(tx: TxRecord, month: number): Promise<void> {
+  const payload = {
+    action:   'delete',
+    month,
+    category: tx.category,
+    day:      tx.day,
+    note:     tx.note,
+    amount:   Math.abs(tx.amount),
+  }
+  await fetch(API_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body:    JSON.stringify(payload),
+    mode:    'no-cors',
+  })
 }
 
 export async function addTransaction(data: Transaction): Promise<void> {

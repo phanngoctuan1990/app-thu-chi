@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import TopAppBar from '../components/TopAppBar'
 import FAB from '../components/FAB'
 import { formatVND, formatVNDShort } from '../utils/formatCurrency'
-import { fetchSummary, fetchTransactions, type TxRecord, type Summary } from '../services/api'
+import { cacheInvalidate, cacheRemoveTx, deleteTransaction, fetchSummary, fetchTransactions, type TxRecord, type Summary } from '../services/api'
 
 // ─── Category meta ────────────────────────────────────────────────────────────
 const CAT_META: Record<string, { icon: string; iconBg: string; iconColor: string; label: string }> = {
@@ -18,24 +18,77 @@ const CAT_META: Record<string, { icon: string; iconBg: string; iconColor: string
 }
 const DEFAULT_META = { icon: 'receipt', iconBg: 'bg-surface-container', iconColor: 'text-outline', label: 'Khác' }
 
-// ─── Transaction row ──────────────────────────────────────────────────────────
-function TxRow({ tx }: { tx: TxRecord }) {
+// ─── Transaction row (swipe-to-delete) ───────────────────────────────────────
+const SWIPE_REVEAL = 72  // px to reveal delete button
+const SWIPE_THRESHOLD = 48
+
+function TxRow({ tx, onDelete }: { tx: TxRecord; onDelete: () => void }) {
   const isIncome = tx.amount >= 0
   const meta = CAT_META[tx.category] ?? DEFAULT_META
+  const [offsetX, setOffsetX] = useState(0)
+  const [open, setOpen] = useState(false)
+  const startXRef = useRef(0)
+  const draggingRef = useRef(false)
+
+  function onTouchStart(e: React.TouchEvent) {
+    startXRef.current = e.touches[0].clientX
+    draggingRef.current = true
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    if (!draggingRef.current) return
+    const dx = e.touches[0].clientX - startXRef.current
+    // Only allow left swipe; if already open allow right swipe to close
+    const base = open ? -SWIPE_REVEAL : 0
+    const next = Math.min(0, Math.max(-SWIPE_REVEAL, base + dx))
+    setOffsetX(next)
+  }
+
+  function onTouchEnd() {
+    draggingRef.current = false
+    const shouldOpen = offsetX < -SWIPE_THRESHOLD
+    setOpen(shouldOpen)
+    setOffsetX(shouldOpen ? -SWIPE_REVEAL : 0)
+  }
+
+  function handleDelete() {
+    setOffsetX(-120)
+    setTimeout(onDelete, 200)
+  }
+
   return (
-    <div className="flex items-center justify-between bg-surface-container-lowest p-4 rounded-[20px] bento-shadow-sm">
-      <div className="flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-full ${meta.iconBg} flex items-center justify-center ${meta.iconColor} shrink-0`}>
-          <span className="material-symbols-outlined text-[20px]">{meta.icon}</span>
-        </div>
-        <div>
-          <p className="font-body font-semibold text-on-surface text-sm">{tx.note}</p>
-          <p className="font-body text-xs text-outline mt-0.5">{meta.label}</p>
-        </div>
+    <div className="relative rounded-[20px] overflow-hidden">
+      {/* Delete button */}
+      <div className="absolute inset-y-0 right-0 w-[72px] bg-error flex items-center justify-center">
+        <button onClick={handleDelete} className="flex flex-col items-center gap-0.5 active:opacity-70">
+          <span className="material-symbols-outlined text-white text-[20px]"
+            style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
+            delete
+          </span>
+          <span className="text-white font-label text-[10px]">Xóa</span>
+        </button>
       </div>
-      <p className={`font-label font-bold text-sm shrink-0 ml-3 ${isIncome ? 'text-secondary' : 'text-primary'}`}>
-        {isIncome ? '+' : ''}{formatVND(Math.abs(tx.amount))}
-      </p>
+      {/* Row */}
+      <div
+        style={{ transform: `translateX(${offsetX}px)`, transition: draggingRef.current ? 'none' : 'transform 0.2s ease' }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        className="flex items-center justify-between bg-surface-container-lowest p-4 rounded-[20px] bento-shadow-sm"
+      >
+        <div className="flex items-center gap-4">
+          <div className={`w-12 h-12 rounded-full ${meta.iconBg} flex items-center justify-center ${meta.iconColor} shrink-0`}>
+            <span className="material-symbols-outlined text-[20px]">{meta.icon}</span>
+          </div>
+          <div>
+            <p className="font-body font-semibold text-on-surface text-sm">{tx.note}</p>
+            <p className="font-body text-xs text-outline mt-0.5">{meta.label}</p>
+          </div>
+        </div>
+        <p className={`font-label font-bold text-sm shrink-0 ml-3 ${isIncome ? 'text-secondary' : 'text-primary'}`}>
+          {isIncome ? '+' : ''}{formatVND(Math.abs(tx.amount))}
+        </p>
+      </div>
     </div>
   )
 }
@@ -53,6 +106,16 @@ export default function TransactionHistory() {
   const [summary, setSummary] = useState<Summary | null>(null)
   const [txList, setTxList] = useState<TxRecord[]>([])
   const [loading, setLoading] = useState(true)
+
+  function handleDelete(tx: TxRecord) {
+    // Optimistic update
+    setTxList(prev => prev.filter(t =>
+      !(t.day === tx.day && t.note === tx.note && t.amount === tx.amount && t.category === tx.category)
+    ))
+    cacheRemoveTx(month, tx)
+    cacheInvalidate(month) // summary sẽ stale, fetch lại lần sau
+    deleteTransaction(tx, month).catch(() => {})
+  }
 
   useEffect(() => {
     setLoading(true)
@@ -179,7 +242,7 @@ export default function TransactionHistory() {
                   {dayLabel(day)}
                 </h3>
                 <div className="flex flex-col gap-3">
-                  {groups[day].map((tx, i) => <TxRow key={i} tx={tx} />)}
+                  {groups[day].map((tx, i) => <TxRow key={i} tx={tx} onDelete={() => handleDelete(tx)} />)}
                 </div>
               </div>
             ))}
