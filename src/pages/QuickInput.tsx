@@ -142,6 +142,21 @@ export default function QuickInput() {
     : 'text-3xl'
   const today = new Date().toISOString().split('T')[0]
 
+  // Amount suggestions: multiply digits by 10k, 100k, 1M, 10M
+  const suggestions: number[] = rawAmount
+    ? [10000, 100000, 1000000, 10000000]
+        .map(m => parseInt(rawAmount, 10) * m)
+        .filter(v => v <= 100000000)
+    : []
+
+  function formatSuggestion(n: number) {
+    if (n >= 1000000) {
+      const m = n / 1000000
+      return `${Number.isInteger(m) ? m : m.toFixed(1)}M`
+    }
+    return `${n / 1000}k`
+  }
+
   function formatDateLabel(dateStr: string) {
     if (dateStr === today) return 'Hôm nay'
     const [y, m, d] = dateStr.split('-')
@@ -237,6 +252,21 @@ export default function QuickInput() {
           </div>
           <div className={`h-1 rounded-full transition-all duration-300 ${amount > 0 ? 'w-16 bg-primary/40' : 'w-12 bg-primary/20'}`} />
         </section>
+
+        {/* ── Amount suggestions ── */}
+        {suggestions.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+            {suggestions.map(s => (
+              <button
+                key={s}
+                onClick={() => setRawAmount(String(s))}
+                className="shrink-0 px-4 py-2 rounded-full bg-primary/10 text-primary font-label font-semibold text-sm active:scale-95 transition-transform duration-150"
+              >
+                {formatSuggestion(s)}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* ── Date picker ── */}
         <div className="relative bg-surface-container-low border-ghost rounded-full px-5 py-3 flex items-center justify-between active:scale-[0.98] transition-all overflow-hidden">

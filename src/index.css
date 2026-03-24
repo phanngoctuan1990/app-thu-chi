@@ -127,4 +127,13 @@
     -webkit-overflow-scrolling: touch;
     overflow-y: auto;
   }
+
+  /* Hide scrollbar */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
