@@ -1,5 +1,5 @@
 const API_URL =
-  'https://script.google.com/macros/s/AKfycbxiENDU8bn5-NXjm6F3tNCCnl0tqLR1sJYGx7oQVW7HrHMXRySKiUbcRHNk4McjN-EBCw/exec'
+  'https://script.google.com/macros/s/AKfycbzRm_JXjKdAE-tKJaxClQlEcwkGlPoe96d7tUItncUquLW5UgfQMein_30UxX8hbB-YGA/exec'
 
 export interface Transaction {
   date: string     // "YYYY-MM-DD"
@@ -19,6 +19,20 @@ const CATEGORY_VI: Record<string, string> = {
   Savings:     'Tiết kiệm',
   Income:      'Thu nhập',
   Other:       'Chi tiêu khác',
+}
+
+export interface Summary {
+  month: number
+  income: number
+  totalSpent: number
+  categories: Record<string, number>
+}
+
+export async function fetchSummary(): Promise<Summary> {
+  const res = await fetch(`${API_URL}?action=summary`)
+  const json = await res.json()
+  if (json.error) throw new Error(json.error)
+  return json as Summary
 }
 
 export async function addTransaction(data: Transaction): Promise<void> {

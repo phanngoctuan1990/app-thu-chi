@@ -34,3 +34,4 @@ pnpm-debug.log*
 Thumb.db
 desktop.ini
 .DS_Store
+.vercel
