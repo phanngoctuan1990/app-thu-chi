@@ -137,6 +137,12 @@ export default function TransactionHistory() {
                 {loading ? '...' : formatVNDShort(summary?.categories?.['Tiết kiệm'] ?? 0)}
               </p>
             </div>
+            <div className="bg-surface-container-lowest rounded-[20px] p-4 flex-1 flex flex-col justify-center border-ghost bento-shadow-sm">
+              <p className="font-headline text-[10px] text-outline uppercase tracking-wider mb-1">Đầu tư</p>
+              <p className="font-label text-lg font-bold text-on-surface leading-none">
+                {loading ? '...' : formatVNDShort(summary?.categories?.['Đầu tư'] ?? 0)}
+              </p>
+            </div>
           </div>
         </div>
 
