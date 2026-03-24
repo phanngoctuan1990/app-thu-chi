@@ -1,0 +1,124 @@
+/* Material Symbols — local font (no CDN dependency) */
+@import 'material-symbols/outlined.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* Prevent pull-to-refresh on iOS */
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    background-color: #feffd5;
+    color: #383929;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    overscroll-behavior-y: none;
+    /* Prevent text size adjustment on orientation change */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  #root {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Tap highlight removal for mobile */
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+  }
+
+  input, textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  /* Material Symbols icon settings */
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+
+  /* Bento card shadow — extra diffused per design spec */
+  .bento-shadow {
+    box-shadow: 0 32px 32px -4px rgba(56, 57, 41, 0.06);
+  }
+
+  .bento-shadow-sm {
+    box-shadow: 0 4px 20px rgba(56, 57, 41, 0.04);
+  }
+
+  /* Glassmorphism panel — surface 60% opacity + 20px blur */
+  .glass-panel {
+    background: rgba(254, 255, 213, 0.72);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  }
+
+  /* App container — max-width 430px centered */
+  .app-container {
+    width: 100%;
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    position: relative;
+    background-color: #feffd5;
+  }
+
+  /* BottomNavBar — safe area aware */
+  .nav-safe {
+    padding-bottom: max(2rem, env(safe-area-inset-bottom));
+  }
+
+  /* TopAppBar — safe area aware */
+  .header-safe {
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+}
+
+@layer utilities {
+  /* Ghost border — outline-variant at 15% opacity */
+  .border-ghost {
+    border: 1px solid rgba(187, 186, 164, 0.15);
+  }
+
+  /* Scale interactions */
+  .press-scale {
+    @apply transition-transform duration-150 active:scale-95;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-150 hover:scale-[1.02] active:scale-95;
+  }
+
+  /* Smooth momentum scrolling on iOS */
+  .scroll-smooth-ios {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+  }
+}
