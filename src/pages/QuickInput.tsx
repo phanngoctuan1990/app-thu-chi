@@ -239,11 +239,8 @@ export default function QuickInput() {
         </section>
 
         {/* ── Date picker ── */}
-        <div
-          onClick={() => dateInputRef.current?.showPicker?.() ?? dateInputRef.current?.click()}
-          className="bg-surface-container-low border-ghost rounded-full px-5 py-3 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all"
-        >
-          <div className="flex items-center gap-3">
+        <div className="relative bg-surface-container-low border-ghost rounded-full px-5 py-3 flex items-center justify-between active:scale-[0.98] transition-all overflow-hidden">
+          <div className="flex items-center gap-3 pointer-events-none">
             <span className="material-symbols-outlined text-outline text-xl"
               style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
               calendar_today
@@ -252,14 +249,15 @@ export default function QuickInput() {
               {formatDateLabel(selectedDate)}
             </span>
           </div>
-          <span className="material-symbols-outlined text-outline text-base">expand_more</span>
+          <span className="material-symbols-outlined text-outline text-base pointer-events-none">expand_more</span>
+          {/* Native input overlay — invisible but covers full row for iOS tap */}
           <input
             ref={dateInputRef}
             type="date"
             value={selectedDate}
             max={today}
             onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-            className="sr-only"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           />
         </div>
 
