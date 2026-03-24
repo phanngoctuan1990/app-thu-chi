@@ -100,6 +100,67 @@ const CATEGORIES = [
 
 type CategoryId = (typeof CATEGORIES)[number]['id']
 
+// ─── Note suggestions ─────────────────────────────────────────────────────────
+
+const NOTE_SUGGESTIONS: { label: string; keys: string[] }[] = [
+  // Ăn uống
+  { label: 'Ăn sáng',          keys: ['an sang'] },
+  { label: 'Ăn trưa',          keys: ['an trua'] },
+  { label: 'Ăn tối',           keys: ['an toi'] },
+  { label: 'Ăn vặt',           keys: ['an vat'] },
+  { label: 'Ăn ngoài',         keys: ['an ngoai'] },
+  { label: 'Cà phê',           keys: ['ca phe', 'cf'] },
+  { label: 'Trà sữa',          keys: ['tra sua', 'ts'] },
+  { label: 'Sinh tố',          keys: ['sinh to'] },
+  { label: 'Nước uống',        keys: ['nuoc uong', 'nuoc'] },
+  { label: 'Phở',              keys: ['pho'] },
+  { label: 'Bún',              keys: ['bun'] },
+  { label: 'Cơm',              keys: ['com'] },
+  { label: 'Bánh mì',          keys: ['banh mi', 'banh'] },
+  { label: 'Bánh ngọt',        keys: ['banh ngot'] },
+  // Di chuyển
+  { label: 'Đổ xăng',         keys: ['do xang', 'do', 'xang'] },
+  { label: 'Grab',             keys: ['grab'] },
+  { label: 'Taxi',             keys: ['taxi', 'ta'] },
+  { label: 'Xe buýt',          keys: ['xe buyt', 'xe'] },
+  { label: 'Gửi xe',           keys: ['gui xe'] },
+  // Mua sắm
+  { label: 'Siêu thị',        keys: ['sieu thi', 'sieu'] },
+  { label: 'Winmart',          keys: ['winmart', 'win'] },
+  { label: 'Tạp hóa',         keys: ['tap hoa'] },
+  { label: 'Mua hàng',        keys: ['mua hang', 'mua'] },
+  { label: 'Quần áo',         keys: ['quan ao'] },
+  { label: 'Giày dép',        keys: ['giay dep'] },
+  { label: 'Mỹ phẩm',         keys: ['my pham'] },
+  // Chi phí bắt buộc
+  { label: 'Tiền nhà',        keys: ['tien nha'] },
+  { label: 'Tiền điện',       keys: ['tien dien'] },
+  { label: 'Tiền nước',       keys: ['tien nuoc'] },
+  { label: 'Tiền internet',   keys: ['tien internet', 'inet'] },
+  { label: 'Tiền điện thoại', keys: ['tien dien thoai'] },
+  { label: 'Bảo hiểm',        keys: ['bao hiem'] },
+  // Vui chơi
+  { label: 'Xem phim',        keys: ['xem phim', 'phim'] },
+  { label: 'Karaoke',         keys: ['karaoke', 'kara'] },
+  { label: 'Du lịch',         keys: ['du lich'] },
+  { label: 'Gym',             keys: ['gym'] },
+  { label: 'Đám cưới',        keys: ['dam cuoi', 'dam'] },
+  // Thanh toán
+  { label: 'Momo',            keys: ['momo', 'mo'] },
+  { label: 'ZaloPay',         keys: ['zalopay', 'zalo'] },
+  // Thu nhập
+  { label: 'Lương',           keys: ['luong'] },
+  { label: 'Thưởng',          keys: ['thuong'] },
+  { label: 'Freelance',       keys: ['freelance', 'free'] },
+  // Sức khỏe
+  { label: 'Thuốc',           keys: ['thuoc'] },
+  { label: 'Khám bệnh',       keys: ['kham benh', 'kham'] },
+]
+
+function normalize(s: string) {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+}
+
 // ─── Toast component ─────────────────────────────────────────────────────────
 
 function Toast({ message, type }: { message: string; type: 'success' | 'error' }) {
@@ -147,6 +208,16 @@ export default function QuickInput() {
     ? [1000, 10000, 100000, 1000000]
         .map(m => parseInt(rawAmount, 10) * m)
         .filter(v => v <= 100000000)
+    : []
+
+  const noteSuggestions = note.trim().length >= 1
+    ? NOTE_SUGGESTIONS
+        .filter(({ label, keys }) => {
+          const q = normalize(note.trim())
+          return normalize(label).startsWith(q) || keys.some(k => k.startsWith(q))
+        })
+        .map(({ label }) => label)
+        .slice(0, 6)
     : []
 
   function formatSuggestion(n: number) {
@@ -322,15 +393,31 @@ export default function QuickInput() {
         </div>
 
         {/* ── Note input ── */}
-        <div className="bg-surface-container-low border-ghost rounded-full px-5 py-4 flex items-center gap-3">
-          <span className="material-symbols-outlined text-outline text-xl">edit_note</span>
-          <input
-            type="text"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Ghi chú? (Phở sáng, Grab đi làm...)"
-            className="bg-transparent border-none outline-none w-full font-body text-on-surface placeholder:text-outline/60 text-sm"
-          />
+        <div className="flex flex-col gap-2">
+          <div className="bg-surface-container-low border-ghost rounded-full px-5 py-4 flex items-center gap-3">
+            <span className="material-symbols-outlined text-outline text-xl">edit_note</span>
+            <input
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Ghi chú? (Phở sáng, Grab đi làm...)"
+              className="bg-transparent border-none outline-none w-full font-body text-on-surface placeholder:text-outline/60 text-sm"
+            />
+          </div>
+
+          {noteSuggestions.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto scrollbar-none px-1">
+              {noteSuggestions.map(s => (
+                <button
+                  key={s}
+                  onClick={() => setNote(s)}
+                  className="shrink-0 px-3 py-1.5 rounded-full bg-surface-container border-ghost font-body text-sm text-on-surface-variant active:scale-95 transition-transform duration-150"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── Confirm button ── */}
