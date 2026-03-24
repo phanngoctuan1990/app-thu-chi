@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import TopAppBar from '../components/TopAppBar'
-import { addTransaction, fetchSummary } from '../services/api'
+import { addTransaction, cacheInvalidate, fetchSummary, fetchTransactions } from '../services/api'
 import { formatVNDShort } from '../utils/formatCurrency'
 
 // ─── Category definitions ────────────────────────────────────────────────────
@@ -187,13 +187,27 @@ export default function QuickInput() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [shake, setShake] = useState(false)
   const [totalSpent, setTotalSpent] = useState<number | null>(null)
+  const [todaySpent, setTodaySpent] = useState<number | null>(null)
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
   const hiddenInputRef = useRef<HTMLInputElement>(null)
   const dateInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    fetchSummary().then(s => setTotalSpent(s.totalSpent)).catch(() => {})
-  }, [])
+  const todayDay = new Date().getDate()
+  const currentMonth = new Date().getMonth() + 1
+
+  function loadStats() {
+    Promise.all([fetchSummary(), fetchTransactions(currentMonth)])
+      .then(([s, txs]) => {
+        setTotalSpent(s.totalSpent)
+        const todayTotal = txs
+          .filter(tx => tx.day === todayDay && tx.amount < 0)
+          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
+        setTodaySpent(todayTotal)
+      })
+      .catch(() => {})
+  }
+
+  useEffect(() => { loadStats() }, [])
 
   const amount = rawAmount ? parseInt(rawAmount, 10) : 0
   const formatted = amount > 0 ? new Intl.NumberFormat('vi-VN').format(amount) : '0'
@@ -271,6 +285,8 @@ export default function QuickInput() {
       setRawAmount('')
       setSelectedCategory(null)
       setNote('')
+      cacheInvalidate(currentMonth)
+      loadStats()
     } catch {
       showToast('Lỗi kết nối, thử lại!', 'error')
     } finally {
@@ -300,12 +316,22 @@ export default function QuickInput() {
         <section className="bg-surface-container-lowest rounded-[24px] px-6 py-5 bento-shadow relative overflow-hidden">
           <div className="absolute -right-4 -top-4 w-20 h-20 bg-primary/10 rounded-full blur-2xl" />
           <p className="font-body text-on-surface-variant text-sm font-medium">Xin chào!</p>
-          <h2 className="font-headline font-extrabold text-xl leading-tight mt-1">
-            Tổng chi tháng này:{' '}
-            <span className="font-label text-primary">
-              {totalSpent === null ? '...' : `${formatVNDShort(totalSpent)} VND`}
-            </span>
-          </h2>
+          <div className="flex items-end justify-between mt-2 gap-4">
+            <div>
+              <p className="font-headline text-[10px] text-outline uppercase tracking-wider mb-0.5">Hôm nay</p>
+              <p className="font-label font-bold text-2xl text-primary leading-none">
+                {todaySpent === null ? '...' : `${formatVNDShort(todaySpent)}`}
+                <span className="font-body text-xs text-outline font-normal ml-1">VND</span>
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="font-headline text-[10px] text-outline uppercase tracking-wider mb-0.5">Tháng này</p>
+              <p className="font-label font-semibold text-base text-on-surface-variant leading-none">
+                {totalSpent === null ? '...' : `${formatVNDShort(totalSpent)}`}
+                <span className="font-body text-xs text-outline font-normal ml-1">VND</span>
+              </p>
+            </div>
+          </div>
         </section>
 
         {/* ── Amount display ── */}

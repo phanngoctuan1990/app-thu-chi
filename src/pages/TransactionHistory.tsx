@@ -64,8 +64,11 @@ export default function TransactionHistory() {
       .finally(() => setLoading(false))
   }, [month])
 
-  // Group transactions by day
+  // Today's spending (only for current month)
   const today = new Date().getDate()
+  const todaySpent = month === CURRENT_MONTH
+    ? txList.filter(tx => tx.day === today && tx.amount < 0).reduce((s, tx) => s + Math.abs(tx.amount), 0)
+    : null
   const yesterday = today - 1
   const groups = txList.reduce<Record<number, TxRecord[]>>((acc, tx) => {
     if (!acc[tx.day]) acc[tx.day] = []
@@ -112,18 +115,30 @@ export default function TransactionHistory() {
 
         {/* ── Bento stats ── */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-primary rounded-[24px] p-5 flex flex-col justify-between aspect-square">
-            <span className="material-symbols-outlined text-on-primary text-[28px]"
-              style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
-              account_balance_wallet
-            </span>
-            <div>
-              <p className="font-headline text-xs text-on-primary/80 mb-1">Tổng chi tiêu</p>
-              <p className="font-label text-xl font-bold text-on-primary leading-none">
-                {loading ? '...' : formatVNDShort(summary?.totalSpent ?? 0)}
-              </p>
+          {/* Left column */}
+          <div className="flex flex-col gap-4">
+            <div className="bg-primary rounded-[24px] p-5 flex flex-col justify-between aspect-square">
+              <span className="material-symbols-outlined text-on-primary text-[28px]"
+                style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
+                account_balance_wallet
+              </span>
+              <div>
+                <p className="font-headline text-xs text-on-primary/80 mb-1">Tổng chi tiêu</p>
+                <p className="font-label text-xl font-bold text-on-primary leading-none">
+                  {loading ? '...' : formatVNDShort(summary?.totalSpent ?? 0)}
+                </p>
+              </div>
             </div>
+            {todaySpent !== null && (
+              <div className="bg-primary/10 rounded-[20px] p-4 flex flex-col justify-center border-ghost bento-shadow-sm">
+                <p className="font-headline text-[10px] text-primary uppercase tracking-wider mb-1">Hôm nay</p>
+                <p className="font-label text-lg font-bold text-primary leading-none">
+                  {loading ? '...' : formatVNDShort(todaySpent)}
+                </p>
+              </div>
+            )}
           </div>
+          {/* Right column */}
           <div className="flex flex-col gap-4">
             <div className="bg-surface-container-lowest rounded-[20px] p-4 flex-1 flex flex-col justify-center border-ghost bento-shadow-sm">
               <p className="font-headline text-[10px] text-outline uppercase tracking-wider mb-1">Thu nhập</p>

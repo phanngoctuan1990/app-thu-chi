@@ -35,19 +35,53 @@ export interface TxRecord {
   amount: number  // negative = chi tiêu, positive = thu nhập
 }
 
+// ─── Local cache (stale-while-revalidate) ────────────────────────────────────
+
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+function cacheGet<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return null
+    const { data, ts } = JSON.parse(raw)
+    if (Date.now() - ts > CACHE_TTL) return null
+    return data as T
+  } catch { return null }
+}
+
+function cacheSet(key: string, data: unknown) {
+  try { localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() })) } catch {}
+}
+
+export function cacheInvalidate(month: number) {
+  localStorage.removeItem(`summary_${month}`)
+  localStorage.removeItem(`transactions_${month}`)
+}
+
+// ─── Fetchers with cache ──────────────────────────────────────────────────────
+
 export async function fetchSummary(month?: number): Promise<Summary> {
   const m = month ?? new Date().getMonth() + 1
+  const key = `summary_${m}`
+  const cached = cacheGet<Summary>(key)
+  if (cached) return cached
   const res = await fetch(`${API_URL}?action=summary&month=${m}`)
   const json = await res.json()
   if (json.error) throw new Error(json.error)
+  cacheSet(key, json)
   return json as Summary
 }
 
 export async function fetchTransactions(month: number): Promise<TxRecord[]> {
+  const key = `transactions_${month}`
+  const cached = cacheGet<TxRecord[]>(key)
+  if (cached) return cached
   const res = await fetch(`${API_URL}?action=transactions&month=${month}`)
   const json = await res.json()
   if (json.error) throw new Error(json.error)
-  return (json.transactions ?? []) as TxRecord[]
+  const txs = (json.transactions ?? []) as TxRecord[]
+  cacheSet(key, txs)
+  return txs
 }
 
 export async function addTransaction(data: Transaction): Promise<void> {
