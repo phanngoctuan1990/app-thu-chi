@@ -126,7 +126,9 @@ export default function QuickInput() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [shake, setShake] = useState(false)
   const [totalSpent, setTotalSpent] = useState<number | null>(null)
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
   const hiddenInputRef = useRef<HTMLInputElement>(null)
+  const dateInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetchSummary().then(s => setTotalSpent(s.totalSpent)).catch(() => {})
@@ -139,6 +141,12 @@ export default function QuickInput() {
     : formatted.length <= 12 ? 'text-4xl'
     : 'text-3xl'
   const today = new Date().toISOString().split('T')[0]
+
+  function formatDateLabel(dateStr: string) {
+    if (dateStr === today) return 'Hôm nay'
+    const [y, m, d] = dateStr.split('-')
+    return `${d}/${m}/${y}`
+  }
 
   function showToast(message: string, type: 'success' | 'error') {
     setToast({ message, type })
@@ -172,7 +180,7 @@ export default function QuickInput() {
 
     setLoading(true)
     try {
-      await addTransaction({ date: today, amount, category: selectedCategory, note })
+      await addTransaction({ date: selectedDate, amount, category: selectedCategory, note })
       showToast('Đã lưu! 🎉', 'success')
       setRawAmount('')
       setSelectedCategory(null)
@@ -229,6 +237,31 @@ export default function QuickInput() {
           </div>
           <div className={`h-1 rounded-full transition-all duration-300 ${amount > 0 ? 'w-16 bg-primary/40' : 'w-12 bg-primary/20'}`} />
         </section>
+
+        {/* ── Date picker ── */}
+        <div
+          onClick={() => dateInputRef.current?.showPicker?.() ?? dateInputRef.current?.click()}
+          className="bg-surface-container-low border-ghost rounded-full px-5 py-3 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-outline text-xl"
+              style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
+              calendar_today
+            </span>
+            <span className="font-body text-sm text-on-surface">
+              {formatDateLabel(selectedDate)}
+            </span>
+          </div>
+          <span className="material-symbols-outlined text-outline text-base">expand_more</span>
+          <input
+            ref={dateInputRef}
+            type="date"
+            value={selectedDate}
+            max={today}
+            onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+            className="sr-only"
+          />
+        </div>
 
         {/* ── Category grid 3×3 ── */}
         <div className="grid grid-cols-3 gap-3">
