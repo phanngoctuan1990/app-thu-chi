@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import TopAppBar from '../components/TopAppBar'
 import FAB from '../components/FAB'
-import BudgetSheet from '../components/BudgetSheet'
 import BudgetAlert from '../components/BudgetAlert'
+import NotificationSheet from '../components/NotificationSheet'
 import { formatVNDShort } from '../utils/formatCurrency'
 import { fetchSummary, getCachedSummary, type Summary } from '../services/api'
 import { useBudget } from '../hooks/useBudget'
+import { useSavingsGoal } from '../hooks/useSavingsGoal'
 
 // ─── AnimatedNumber ───────────────────────────────────────────────────────────
 function AnimatedNumber({ value, className }: { value: number; className?: string }) {
@@ -162,8 +163,9 @@ const MONTH_NAMES = ['', 'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng
 export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(() => getCachedSummary())
   const [loading, setLoading] = useState(() => getCachedSummary() === null)
-  const [showBudgetSheet, setShowBudgetSheet] = useState(false)
-  const { threshold, setThreshold, clearThreshold } = useBudget()
+  const [showNotifSheet, setShowNotifSheet] = useState(false)
+  const { threshold } = useBudget()
+  const { goal } = useSavingsGoal()
 
   useEffect(() => {
     fetchSummary()
@@ -188,7 +190,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <TopAppBar title="Tổng quan" subtitle={`${MONTH_NAMES[month]}, ${year}`} />
+      <TopAppBar title="Tổng quan" subtitle={`${MONTH_NAMES[month]}, ${year}`} onBellPress={() => setShowNotifSheet(true)} />
 
       <main className="pt-20 pb-36 px-5 w-full flex flex-col gap-5">
 
@@ -207,7 +209,7 @@ export default function Dashboard() {
           <BudgetAlert
             spent={spent}
             threshold={threshold}
-            onEdit={() => setShowBudgetSheet(true)}
+            onEdit={() => setShowNotifSheet(true)}
           />
         )}
 
@@ -247,7 +249,7 @@ export default function Dashboard() {
                     {Math.round(spentPct)}% thu nhập đã chi tiêu
                   </p>
                   <button
-                    onClick={() => setShowBudgetSheet(true)}
+                    onClick={() => setShowNotifSheet(true)}
                     className="flex items-center gap-1 font-label text-[10px] text-primary/70 hover:text-primary transition-colors active:opacity-70"
                   >
                     <span className="material-symbols-outlined text-[13px]">tune</span>
@@ -338,22 +340,54 @@ export default function Dashboard() {
                 {month}
               </span>
               <div className="relative z-10">
-                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-3">
-                  <span className="material-symbols-outlined text-[20px] text-[#feffd5]"
-                    style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
-                    savings
-                  </span>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[20px] text-[#feffd5]"
+                      style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
+                      savings
+                    </span>
+                  </div>
+                  {goal > 0 && (
+                    <span className="font-label text-[10px] text-white/50 uppercase tracking-wider">
+                      Mục tiêu: {formatVNDShort(goal)}
+                    </span>
+                  )}
                 </div>
                 <p className="font-body text-xs text-outline-variant mb-1">Tổng tiết kiệm</p>
                 <p className="font-label font-bold text-2xl leading-none text-[#feffd5]">
                   <AnimatedNumber value={savings} />
                   <span className="text-sm font-normal text-outline-variant ml-1">VND</span>
                 </p>
-                <button className="mt-4 bg-white/15 text-white px-4 py-2 rounded-full text-xs font-bold font-headline flex items-center gap-2 active:scale-95 transition-transform">
-                  Đặt mục tiêu
+
+                {/* Savings goal progress bar */}
+                {goal > 0 && (
+                  <div className="mt-3">
+                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{
+                          width: `${Math.min((savings / goal) * 100, 100)}%`,
+                          background: savings >= goal ? '#7cb342' : 'rgba(255,255,255,0.5)',
+                        }}
+                      />
+                    </div>
+                    <p className="font-label text-[10px] text-white/40 mt-1">
+                      {savings >= goal
+                        ? '🎉 Đã đạt mục tiêu!'
+                        : `${Math.round((savings / goal) * 100)}% — còn ${formatVNDShort(goal - savings)}`
+                      }
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => setShowNotifSheet(true)}
+                  className="mt-4 bg-white/15 text-white px-4 py-2 rounded-full text-xs font-bold font-headline flex items-center gap-2 active:scale-95 transition-transform"
+                >
+                  {goal > 0 ? 'Sửa mục tiêu' : 'Đặt mục tiêu'}
                   <span className="material-symbols-outlined text-sm"
                     style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
-                    add_circle
+                    {goal > 0 ? 'edit' : 'add_circle'}
                   </span>
                 </button>
               </div>
@@ -366,13 +400,8 @@ export default function Dashboard() {
 
       <FAB />
 
-      {showBudgetSheet && (
-        <BudgetSheet
-          current={threshold}
-          onSave={setThreshold}
-          onClear={clearThreshold}
-          onClose={() => setShowBudgetSheet(false)}
-        />
+      {showNotifSheet && (
+        <NotificationSheet onClose={() => setShowNotifSheet(false)} />
       )}
     </>
   )

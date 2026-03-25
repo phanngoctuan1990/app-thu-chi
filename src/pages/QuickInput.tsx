@@ -3,7 +3,7 @@ import TopAppBar from '../components/TopAppBar'
 import { addTransaction, cacheInvalidate, fetchSummary, fetchTransactions, getCachedSummary, getCachedTransactions } from '../services/api'
 import { formatVNDShort } from '../utils/formatCurrency'
 import BudgetAlert from '../components/BudgetAlert'
-import BudgetSheet from '../components/BudgetSheet'
+import NotificationSheet from '../components/NotificationSheet'
 import { useBudget } from '../hooks/useBudget'
 
 // ─── Category definitions ────────────────────────────────────────────────────
@@ -205,8 +205,8 @@ export default function QuickInput() {
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [shake, setShake] = useState(false)
-  const [showBudgetSheet, setShowBudgetSheet] = useState(false)
-  const { threshold, setThreshold, clearThreshold } = useBudget()
+  const [showNotifSheet, setShowNotifSheet] = useState(false)
+  const { threshold } = useBudget()
   const todayDay = new Date().getDate()
   const currentMonth = new Date().getMonth() + 1
   const today = new Date().toISOString().split('T')[0]
@@ -322,7 +322,7 @@ export default function QuickInput() {
 
   return (
     <>
-      <TopAppBar title="Thu Chi" />
+      <TopAppBar title="Thu Chi" onBellPress={() => setShowNotifSheet(true)} />
 
       {toast && <Toast message={toast.message} type={toast.type} />}
 
@@ -373,7 +373,7 @@ export default function QuickInput() {
           <BudgetAlert
             spent={totalSpent}
             threshold={threshold}
-            onEdit={() => setShowBudgetSheet(true)}
+            onEdit={() => setShowNotifSheet(true)}
           />
         )}
 
@@ -542,13 +542,8 @@ export default function QuickInput() {
 
       </main>
 
-      {showBudgetSheet && (
-        <BudgetSheet
-          current={threshold}
-          onSave={setThreshold}
-          onClear={clearThreshold}
-          onClose={() => setShowBudgetSheet(false)}
-        />
+      {showNotifSheet && (
+        <NotificationSheet onClose={() => setShowNotifSheet(false)} />
       )}
     </>
   )

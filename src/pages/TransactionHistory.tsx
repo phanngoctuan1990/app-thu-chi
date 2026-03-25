@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import TopAppBar from '../components/TopAppBar'
+import NotificationSheet from '../components/NotificationSheet'
 import FAB from '../components/FAB'
 import { formatVND, formatVNDShort } from '../utils/formatCurrency'
 import { cacheInvalidate, cacheRemoveTx, deleteTransaction, fetchSummary, fetchTransactions, getCachedSummary, getCachedTransactions, type TxRecord, type Summary } from '../services/api'
@@ -105,6 +106,7 @@ const CURRENT_DAY   = new Date().getDate()
 
 export default function TransactionHistory() {
   const [month, setMonth] = useState(CURRENT_MONTH)
+  const [showNotifSheet, setShowNotifSheet] = useState(false)
   const [summary, setSummary] = useState<Summary | null>(() => getCachedSummary(CURRENT_MONTH))
   const [txList, setTxList] = useState<TxRecord[]>(() => getCachedTransactions(CURRENT_MONTH) ?? [])
   const [loading, setLoading] = useState(() => getCachedSummary(CURRENT_MONTH) === null)
@@ -151,7 +153,7 @@ export default function TransactionHistory() {
 
   return (
     <>
-      <TopAppBar title="Lịch sử" subtitle={`Tháng ${month}, ${CURRENT_YEAR}`} />
+      <TopAppBar title="Lịch sử" subtitle={`Tháng ${month}, ${CURRENT_YEAR}`} onBellPress={() => setShowNotifSheet(true)} />
 
       <main className="pt-20 pb-36 px-5 w-full flex flex-col gap-6">
 
@@ -327,6 +329,10 @@ export default function TransactionHistory() {
       </main>
 
       <FAB />
+
+      {showNotifSheet && (
+        <NotificationSheet onClose={() => setShowNotifSheet(false)} />
+      )}
     </>
   )
 }
