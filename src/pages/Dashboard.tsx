@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import TopAppBar from '../components/TopAppBar'
 import FAB from '../components/FAB'
+import BudgetSheet from '../components/BudgetSheet'
+import BudgetAlert from '../components/BudgetAlert'
 import { formatVNDShort } from '../utils/formatCurrency'
 import { fetchSummary, getCachedSummary, type Summary } from '../services/api'
+import { useBudget } from '../hooks/useBudget'
 
 // ─── AnimatedNumber ───────────────────────────────────────────────────────────
 function AnimatedNumber({ value, className }: { value: number; className?: string }) {
@@ -159,6 +162,8 @@ const MONTH_NAMES = ['', 'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng
 export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(() => getCachedSummary())
   const [loading, setLoading] = useState(() => getCachedSummary() === null)
+  const [showBudgetSheet, setShowBudgetSheet] = useState(false)
+  const { threshold, setThreshold, clearThreshold } = useBudget()
 
   useEffect(() => {
     fetchSummary()
@@ -197,6 +202,15 @@ export default function Dashboard() {
           </h2>
         </div>
 
+        {/* ── Budget alert (shown even during loading if threshold set + data cached) ── */}
+        {!loading && threshold > 0 && (
+          <BudgetAlert
+            spent={spent}
+            threshold={threshold}
+            onEdit={() => setShowBudgetSheet(true)}
+          />
+        )}
+
         {loading ? (
           <SkeletonGrid />
         ) : (
@@ -228,9 +242,18 @@ export default function Dashboard() {
                     style={{ width: `${spentPct}%` }}
                   />
                 </div>
-                <p className="font-label text-[10px] text-outline mt-1.5">
-                  {Math.round(spentPct)}% thu nhập đã chi tiêu
-                </p>
+                <div className="flex items-center justify-between mt-1.5">
+                  <p className="font-label text-[10px] text-outline">
+                    {Math.round(spentPct)}% thu nhập đã chi tiêu
+                  </p>
+                  <button
+                    onClick={() => setShowBudgetSheet(true)}
+                    className="flex items-center gap-1 font-label text-[10px] text-primary/70 hover:text-primary transition-colors active:opacity-70"
+                  >
+                    <span className="material-symbols-outlined text-[13px]">tune</span>
+                    {threshold > 0 ? `Ngưỡng: ${formatVNDShort(threshold)}` : 'Đặt ngưỡng'}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -342,6 +365,15 @@ export default function Dashboard() {
       </main>
 
       <FAB />
+
+      {showBudgetSheet && (
+        <BudgetSheet
+          current={threshold}
+          onSave={setThreshold}
+          onClear={clearThreshold}
+          onClose={() => setShowBudgetSheet(false)}
+        />
+      )}
     </>
   )
 }
