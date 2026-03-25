@@ -216,6 +216,10 @@ html.dark {
   from { width: 0;      opacity: 0; }
   to   { width: 2rem;  opacity: 1; }
 }
+@keyframes voice-bar {
+  0%, 100% { transform: scaleY(0.2); }
+  50%       { transform: scaleY(1);   }
+}
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   20%      { transform: translateX(-8px); }

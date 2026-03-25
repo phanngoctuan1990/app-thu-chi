@@ -9,96 +9,15 @@ import { useBudget } from '../hooks/useBudget'
 // ─── Category definitions ────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  {
-    id: 'Meals',
-    label: 'Ăn uống',
-    icon: 'restaurant',
-    bg: 'bg-[#eef6ef]',
-    iconBg: 'bg-[#c8e6c9]/60',
-    iconColor: 'text-[#2e7d32]',
-    textColor: 'text-[#1b5e20]',
-    ringColor: 'ring-[#66bb6a]',
-  },
-  {
-    id: 'Shopping',
-    label: 'Mua hàng',
-    icon: 'shopping_bag',
-    bg: 'bg-[#fff3e0]',
-    iconBg: 'bg-[#ffe0b2]/60',
-    iconColor: 'text-[#e65100]',
-    textColor: 'text-[#bf360c]',
-    ringColor: 'ring-[#ffa726]',
-  },
-  {
-    id: 'Transport',
-    label: 'Di chuyển',
-    icon: 'directions_car',
-    bg: 'bg-[#e0f7fa]',
-    iconBg: 'bg-[#b2ebf2]/60',
-    iconColor: 'text-[#006064]',
-    textColor: 'text-[#004d40]',
-    ringColor: 'ring-[#26c6da]',
-  },
-  {
-    id: 'Compulsory',
-    label: 'Bắt buộc',
-    icon: 'receipt_long',
-    bg: 'bg-[#eceff1]',
-    iconBg: 'bg-[#cfd8dc]/60',
-    iconColor: 'text-[#455a64]',
-    textColor: 'text-[#263238]',
-    ringColor: 'ring-[#78909c]',
-  },
-  {
-    id: 'Fun',
-    label: 'Vui chơi',
-    icon: 'celebration',
-    bg: 'bg-[#e3f2fd]',
-    iconBg: 'bg-[#bbdefb]/60',
-    iconColor: 'text-[#1565c0]',
-    textColor: 'text-[#0d47a1]',
-    ringColor: 'ring-[#42a5f5]',
-  },
-  {
-    id: 'Invest',
-    label: 'Đầu tư',
-    icon: 'trending_up',
-    bg: 'bg-[#f3e5f5]',
-    iconBg: 'bg-[#e1bee7]/60',
-    iconColor: 'text-[#6a1b9a]',
-    textColor: 'text-[#4a148c]',
-    ringColor: 'ring-[#ab47bc]',
-  },
-  {
-    id: 'Savings',
-    label: 'Tiết kiệm',
-    icon: 'savings',
-    bg: 'bg-[#f9fbe7]',
-    iconBg: 'bg-[#f0f4c3]/60',
-    iconColor: 'text-[#558b2f]',
-    textColor: 'text-[#33691e]',
-    ringColor: 'ring-[#aed581]',
-  },
-  {
-    id: 'Income',
-    label: 'Thu nhập',
-    icon: 'payments',
-    bg: 'bg-[#fce4ec]',
-    iconBg: 'bg-[#f8bbd0]/60',
-    iconColor: 'text-[#880e4f]',
-    textColor: 'text-[#4a0072]',
-    ringColor: 'ring-[#ec407a]',
-  },
-  {
-    id: 'Other',
-    label: 'Khác',
-    icon: 'more_horiz',
-    bg: 'bg-[#fffde7]',
-    iconBg: 'bg-[#fff9c4]/60',
-    iconColor: 'text-[#f57f17]',
-    textColor: 'text-[#e65100]',
-    ringColor: 'ring-[#ffca28]',
-  },
+  { id: 'Meals',      label: 'Ăn uống',  icon: 'restaurant',    bg: 'bg-[#eef6ef]', iconBg: 'bg-[#c8e6c9]/60', iconColor: 'text-[#2e7d32]', textColor: 'text-[#1b5e20]', ringColor: 'ring-[#66bb6a]' },
+  { id: 'Shopping',   label: 'Mua hàng', icon: 'shopping_bag',  bg: 'bg-[#fff3e0]', iconBg: 'bg-[#ffe0b2]/60', iconColor: 'text-[#e65100]', textColor: 'text-[#bf360c]', ringColor: 'ring-[#ffa726]' },
+  { id: 'Transport',  label: 'Di chuyển',icon: 'directions_car', bg: 'bg-[#e0f7fa]', iconBg: 'bg-[#b2ebf2]/60', iconColor: 'text-[#006064]', textColor: 'text-[#004d40]', ringColor: 'ring-[#26c6da]' },
+  { id: 'Compulsory', label: 'Bắt buộc', icon: 'receipt_long',  bg: 'bg-[#eceff1]', iconBg: 'bg-[#cfd8dc]/60', iconColor: 'text-[#455a64]', textColor: 'text-[#263238]', ringColor: 'ring-[#78909c]' },
+  { id: 'Fun',        label: 'Vui chơi', icon: 'celebration',   bg: 'bg-[#e3f2fd]', iconBg: 'bg-[#bbdefb]/60', iconColor: 'text-[#1565c0]', textColor: 'text-[#0d47a1]', ringColor: 'ring-[#42a5f5]' },
+  { id: 'Invest',     label: 'Đầu tư',   icon: 'trending_up',   bg: 'bg-[#f3e5f5]', iconBg: 'bg-[#e1bee7]/60', iconColor: 'text-[#6a1b9a]', textColor: 'text-[#4a148c]', ringColor: 'ring-[#ab47bc]' },
+  { id: 'Savings',    label: 'Tiết kiệm',icon: 'savings',       bg: 'bg-[#f9fbe7]', iconBg: 'bg-[#f0f4c3]/60', iconColor: 'text-[#558b2f]', textColor: 'text-[#33691e]', ringColor: 'ring-[#aed581]' },
+  { id: 'Income',     label: 'Thu nhập', icon: 'payments',      bg: 'bg-[#fce4ec]', iconBg: 'bg-[#f8bbd0]/60', iconColor: 'text-[#880e4f]', textColor: 'text-[#4a0072]', ringColor: 'ring-[#ec407a]' },
+  { id: 'Other',      label: 'Khác',     icon: 'more_horiz',    bg: 'bg-[#fffde7]', iconBg: 'bg-[#fff9c4]/60', iconColor: 'text-[#f57f17]', textColor: 'text-[#e65100]', ringColor: 'ring-[#ffca28]' },
 ] as const
 
 type CategoryId = (typeof CATEGORIES)[number]['id']
@@ -156,6 +75,87 @@ function normalize(s: string) {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 }
 
+// ─── Web Speech API minimal types ─────────────────────────────────────────────
+
+interface ISpeechRecognition extends EventTarget {
+  lang: string
+  continuous: boolean
+  interimResults: boolean
+  start(): void
+  stop(): void
+  abort(): void
+  onresult: ((e: ISpeechRecognitionEvent) => void) | null
+  onend: (() => void) | null
+  onerror: ((e: { error: string }) => void) | null
+}
+interface ISpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList
+}
+declare global {
+  interface Window {
+    SpeechRecognition?: new () => ISpeechRecognition
+    webkitSpeechRecognition?: new () => ISpeechRecognition
+  }
+}
+
+// ─── Voice: parse amount + note from transcript ───────────────────────────────
+
+function parseVoiceInput(raw: string): { amount: number; note: string } {
+  const text = raw.trim()
+  let amount = 0
+  let amountMatch = ''
+
+  function tryMatch(re: RegExp, compute: (m: RegExpMatchArray) => number) {
+    if (amount) return
+    const m = text.match(re)
+    if (m) { amount = Math.round(compute(m)); amountMatch = m[0] }
+  }
+
+  // "X triệu Y nghìn"
+  tryMatch(/(\d+(?:[,.]\d+)?)\s*triệu\s+(\d+)\s*(?:nghìn|ngàn|k)?/i,
+    m => parseFloat(m[1].replace(',', '.')) * 1_000_000 + parseInt(m[2]) * 1_000)
+  // "X triệu rưỡi"
+  tryMatch(/(\d+)\s*triệu\s*rưỡi/i,
+    m => parseInt(m[1]) * 1_000_000 + 500_000)
+  // "X triệu"
+  tryMatch(/(\d+(?:[,.]\d+)?)\s*(?:triệu|tr)\b/i,
+    m => parseFloat(m[1].replace(',', '.')) * 1_000_000)
+  // "X nghìn / ngàn / k"
+  tryMatch(/(\d+(?:[,.]\d+)?)\s*(?:nghìn|ngàn|k)\b/i,
+    m => parseFloat(m[1].replace(',', '.')) * 1_000)
+  // "X trăm"
+  tryMatch(/(\d+)\s*trăm\b/i, m => parseInt(m[1]) * 100)
+  // bare 4+ digit number
+  tryMatch(/\b(\d{4,})\b/, m => parseInt(m[1]))
+
+  const note = amountMatch
+    ? text.replace(amountMatch, '').replace(/\s+/g, ' ').trim()
+    : text
+
+  return { amount, note }
+}
+
+// ─── Voice: category auto-detect from note ───────────────────────────────────
+
+const CAT_KEYWORDS: Array<{ kw: string[]; cat: CategoryId }> = [
+  { kw: ['ăn', 'cơm', 'phở', 'bún', 'bánh', 'cà phê', 'cafe', 'trà', 'nước uống', 'sinh tố', 'bữa', 'quán', 'nhà hàng', 'đồ ăn'], cat: 'Meals' },
+  { kw: ['xăng', 'grab', 'taxi', 'xe buýt', 'gửi xe', 'uber', 'di chuyển'], cat: 'Transport' },
+  { kw: ['mua', 'siêu thị', 'winmart', 'shop', 'quần áo', 'giày', 'mỹ phẩm', 'tạp hóa'], cat: 'Shopping' },
+  { kw: ['tiền nhà', 'tiền điện', 'tiền nước', 'internet', 'bảo hiểm', 'điện thoại', 'hóa đơn'], cat: 'Compulsory' },
+  { kw: ['phim', 'karaoke', 'chơi', 'du lịch', 'gym', 'đám cưới', 'game', 'giải trí'], cat: 'Fun' },
+  { kw: ['đầu tư', 'chứng khoán', 'crypto', 'coin', 'quỹ'], cat: 'Invest' },
+  { kw: ['tiết kiệm', 'để dành'], cat: 'Savings' },
+  { kw: ['lương', 'thưởng', 'freelance', 'thu nhập', 'doanh thu'], cat: 'Income' },
+]
+
+function detectCategory(note: string): CategoryId | null {
+  const n = note.toLowerCase()
+  for (const { kw, cat } of CAT_KEYWORDS) {
+    if (kw.some(k => n.includes(k))) return cat
+  }
+  return null
+}
+
 // ─── AnimatedNumber ───────────────────────────────────────────────────────────
 
 function AnimatedNumber({ value, className }: { value: number; className?: string }) {
@@ -194,6 +194,28 @@ function Toast({ message, type }: { message: string; type: 'success' | 'error' }
 
 // ─── Submit states ────────────────────────────────────────────────────────────
 type SubmitState = 'idle' | 'loading' | 'success' | 'error'
+type VoiceState  = 'idle' | 'listening' | 'unsupported'
+
+// ─── Waveform bars (shown while listening) ────────────────────────────────────
+function VoiceWave() {
+  const speeds = [0.7, 1.1, 0.85, 1.3, 0.95]
+  const delays = [0, 0.15, 0.05, 0.22, 0.1]
+  return (
+    <div className="flex items-center gap-[3px] h-6">
+      {speeds.map((s, i) => (
+        <div
+          key={i}
+          className="w-[3px] rounded-full bg-white"
+          style={{
+            height: 24,
+            transformOrigin: 'center',
+            animation: `voice-bar ${s}s ease-in-out ${delays[i]}s infinite`,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
@@ -211,16 +233,23 @@ export default function QuickInput() {
   const currentMonth = new Date().getMonth() + 1
   const today = new Date().toISOString().split('T')[0]
 
-  const [totalSpent, setTotalSpent] = useState<number | null>(() => {
-    return getCachedSummary(currentMonth)?.totalSpent ?? null
-  })
+  // Voice input state
+  const [voiceState, setVoiceState] = useState<VoiceState>(() =>
+    (window.SpeechRecognition ?? window.webkitSpeechRecognition) ? 'idle' : 'unsupported'
+  )
+  const [interimText, setInterimText] = useState('')
+  const recognitionRef = useRef<ISpeechRecognition | null>(null)
+
+  const [totalSpent, setTotalSpent] = useState<number | null>(() =>
+    getCachedSummary(currentMonth)?.totalSpent ?? null
+  )
   const [todaySpent, setTodaySpent] = useState<number | null>(() => {
     const txs = getCachedTransactions(currentMonth)
     if (!txs) return null
     return txs.filter(tx => tx.day === new Date().getDate() && tx.amount < 0)
       .reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
   })
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(() => today)
   const hiddenInputRef = useRef<HTMLInputElement>(null)
   const dateInputRef = useRef<HTMLInputElement>(null)
 
@@ -290,6 +319,65 @@ export default function QuickInput() {
     setJustSelected(id)
     setTimeout(() => setJustSelected(null), 400)
   }
+
+  // ── Voice ────────────────────────────────────────────────────────────────────
+
+  function startVoice() {
+    const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition
+    if (!SR) return
+
+    const recognition = new SR()
+    recognition.lang = 'vi-VN'
+    recognition.continuous = false
+    recognition.interimResults = true
+
+    recognition.onresult = (e: ISpeechRecognitionEvent) => {
+      let interim = ''
+      let final = ''
+      for (let i = 0; i < e.results.length; i++) {
+        if (e.results[i].isFinal) final = e.results[i][0].transcript
+        else interim = e.results[i][0].transcript
+      }
+      if (interim) setInterimText(interim)
+      if (final) {
+        const { amount: parsedAmount, note: parsedNote } = parseVoiceInput(final)
+        if (parsedAmount > 0) setRawAmount(String(parsedAmount))
+        if (parsedNote) setNote(parsedNote)
+        const cat = detectCategory(parsedNote || final)
+        if (cat) {
+          setSelectedCategory(cat)
+          setJustSelected(cat)
+          setTimeout(() => setJustSelected(null), 400)
+        }
+        setInterimText('')
+        setVoiceState('idle')
+        showToast(parsedAmount > 0 ? `Nhận: "${final}"` : 'Không nhận ra số tiền', parsedAmount > 0 ? 'success' : 'error')
+      }
+    }
+
+    recognition.onend = () => {
+      setVoiceState('idle')
+      setInterimText('')
+    }
+
+    recognition.onerror = (e) => {
+      setVoiceState('idle')
+      setInterimText('')
+      if (e.error !== 'aborted') showToast('Không thể dùng mic, thử lại!', 'error')
+    }
+
+    recognitionRef.current = recognition
+    recognition.start()
+    setVoiceState('listening')
+  }
+
+  function stopVoice() {
+    recognitionRef.current?.stop()
+    setVoiceState('idle')
+    setInterimText('')
+  }
+
+  // ── Submit ───────────────────────────────────────────────────────────────────
 
   async function handleConfirm() {
     if (amount <= 0) {
@@ -418,6 +506,77 @@ export default function QuickInput() {
           </div>
         )}
 
+        {/* ── Voice input ── */}
+        {voiceState !== 'unsupported' && (
+          <div className="animate-fade-up delay-50">
+            {voiceState === 'idle' ? (
+              <button
+                onClick={startVoice}
+                className="w-full flex items-center gap-3 px-5 py-3.5 rounded-full bg-surface-container border border-outline-variant/15 active:scale-[0.98] transition-all duration-150 group"
+              >
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 group-active:bg-primary/20 transition-colors">
+                  <span
+                    className="material-symbols-outlined text-primary text-[18px]"
+                    style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}
+                  >
+                    mic
+                  </span>
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="font-body text-sm font-medium text-on-surface">Nhập bằng giọng nói</p>
+                  <p className="font-label text-[10px] text-outline">VD: "ăn sáng 40 nghìn" hoặc "2 triệu rưỡi"</p>
+                </div>
+                <span className="material-symbols-outlined text-outline text-[18px]">chevron_right</span>
+              </button>
+            ) : (
+              /* ─ Listening state ─ */
+              <div
+                className="flex items-center gap-4 px-5 py-4 rounded-[20px] overflow-hidden relative"
+                style={{ background: 'linear-gradient(135deg, #bf2a02, #e84020)' }}
+              >
+                {/* Pulse rings */}
+                <div className="relative shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <span
+                      className="material-symbols-outlined text-white text-[20px]"
+                      style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}
+                    >
+                      mic
+                    </span>
+                  </div>
+                  <span className="absolute inset-0 rounded-full bg-white/30"
+                    style={{ animation: 'ping-slow 1.4s cubic-bezier(0,0,0.2,1) infinite' }} />
+                  <span className="absolute inset-0 rounded-full bg-white/15"
+                    style={{ animation: 'ping-slow 1.4s cubic-bezier(0,0,0.2,1) 0.4s infinite' }} />
+                </div>
+
+                {/* Text + waveform */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-label font-bold text-[11px] text-white/70 uppercase tracking-wider mb-1">
+                    Đang nghe...
+                  </p>
+                  {interimText ? (
+                    <p className="font-body text-sm text-white truncate">{interimText}</p>
+                  ) : (
+                    <VoiceWave />
+                  )}
+                </div>
+
+                {/* Stop button */}
+                <button
+                  onClick={stopVoice}
+                  className="shrink-0 w-9 h-9 rounded-full bg-white/20 flex items-center justify-center active:bg-white/35 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-white text-[18px]"
+                    style={{ fontVariationSettings: "'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24" }}>
+                    stop
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── Date picker ── */}
         <div className="relative bg-surface-container-lowest border border-outline-variant/10 rounded-full px-5 py-3 flex items-center justify-between active:scale-[0.98] transition-all overflow-hidden bento-shadow-sm">
           <div className="flex items-center gap-3 pointer-events-none">
@@ -518,23 +677,12 @@ export default function QuickInput() {
           style={submitState === 'success' ? { animation: 'success-burst 0.4s ease' } : undefined}
         >
           {submitState === 'loading' ? (
-            <>
-              <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              Đang lưu...
-            </>
+            <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Đang lưu...</>
           ) : submitState === 'success' ? (
-            <>
-              <span className="material-symbols-outlined text-xl"
-                style={{ fontVariationSettings: "'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24" }}>
-                check_circle
-              </span>
-              Đã lưu!
-            </>
+            <><span className="material-symbols-outlined text-xl"
+              style={{ fontVariationSettings: "'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24" }}>check_circle</span>Đã lưu!</>
           ) : submitState === 'error' ? (
-            <>
-              <span className="material-symbols-outlined text-xl">error</span>
-              Lỗi, thử lại!
-            </>
+            <><span className="material-symbols-outlined text-xl">error</span>Lỗi, thử lại!</>
           ) : (
             'Xác nhận chi tiêu'
           )}
