@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import TopAppBar from '../components/TopAppBar'
 import NotificationSheet from '../components/NotificationSheet'
+import EditTransactionSheet from '../components/EditTransactionSheet'
 import FAB from '../components/FAB'
 import { formatVND, formatVNDShort } from '../utils/formatCurrency'
 import { cacheInvalidate, cacheRemoveTx, deleteTransaction, fetchSummary, fetchTransactions, getCachedSummary, getCachedTransactions, type TxRecord, type Summary } from '../services/api'
@@ -23,22 +24,25 @@ const DEFAULT_META = { icon: 'receipt', iconBg: 'bg-surface-container', iconColo
 const SWIPE_REVEAL = 72
 const SWIPE_THRESHOLD = 48
 
-function TxRow({ tx, onDelete, index }: { tx: TxRecord; onDelete: () => void; index: number }) {
+function TxRow({ tx, onDelete, onTap, index }: { tx: TxRecord; onDelete: () => void; onTap: () => void; index: number }) {
   const isIncome = tx.amount >= 0
   const meta = CAT_META[tx.category] ?? DEFAULT_META
   const [offsetX, setOffsetX] = useState(0)
   const [open, setOpen] = useState(false)
   const startXRef = useRef(0)
   const draggingRef = useRef(false)
+  const swipedRef = useRef(false)  // true khi swipe đủ xa → chặn click
 
   function onTouchStart(e: React.TouchEvent) {
     startXRef.current = e.touches[0].clientX
     draggingRef.current = true
+    swipedRef.current = false
   }
 
   function onTouchMove(e: React.TouchEvent) {
     if (!draggingRef.current) return
     const dx = e.touches[0].clientX - startXRef.current
+    if (Math.abs(dx) > 10) swipedRef.current = true
     const base = open ? -SWIPE_REVEAL : 0
     const next = Math.min(0, Math.max(-SWIPE_REVEAL, base + dx))
     setOffsetX(next)
@@ -49,6 +53,14 @@ function TxRow({ tx, onDelete, index }: { tx: TxRecord; onDelete: () => void; in
     const shouldOpen = offsetX < -SWIPE_THRESHOLD
     setOpen(shouldOpen)
     setOffsetX(shouldOpen ? -SWIPE_REVEAL : 0)
+  }
+
+  function handleClick() {
+    // Nếu đang mở (swipe state) → tap để đóng lại, không mở edit
+    if (open) { setOpen(false); setOffsetX(0); return }
+    // Nếu vừa swipe → không mở edit
+    if (swipedRef.current) return
+    onTap()
   }
 
   function handleDelete() {
@@ -77,7 +89,8 @@ function TxRow({ tx, onDelete, index }: { tx: TxRecord; onDelete: () => void; in
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        className="flex items-center justify-between bg-surface-container-lowest p-4 rounded-[20px] bento-shadow-sm"
+        onClick={handleClick}
+        className="flex items-center justify-between bg-surface-container-lowest p-4 rounded-[20px] bento-shadow-sm active:bg-surface-container transition-colors duration-150"
       >
         <div className="flex items-center gap-4">
           <div className={`w-12 h-12 rounded-full ${meta.iconBg} flex items-center justify-center ${meta.iconColor} shrink-0`}>
@@ -91,9 +104,12 @@ function TxRow({ tx, onDelete, index }: { tx: TxRecord; onDelete: () => void; in
             <p className="font-body text-xs text-outline mt-0.5">{meta.label}</p>
           </div>
         </div>
-        <p className={`font-label font-bold text-sm shrink-0 ml-3 ${isIncome ? 'text-secondary' : 'text-primary'}`}>
-          {isIncome ? '+' : ''}{formatVND(Math.abs(tx.amount))}
-        </p>
+        <div className="flex items-center gap-2 shrink-0 ml-3">
+          <p className={`font-label font-bold text-sm ${isIncome ? 'text-secondary' : 'text-primary'}`}>
+            {isIncome ? '+' : ''}{formatVND(Math.abs(tx.amount))}
+          </p>
+          <span className="material-symbols-outlined text-[16px] text-outline/40">chevron_right</span>
+        </div>
       </div>
     </div>
   )
@@ -107,6 +123,7 @@ const CURRENT_DAY   = new Date().getDate()
 export default function TransactionHistory() {
   const [month, setMonth] = useState(CURRENT_MONTH)
   const [showNotifSheet, setShowNotifSheet] = useState(false)
+  const [editingTx, setEditingTx] = useState<TxRecord | null>(null)
   const [summary, setSummary] = useState<Summary | null>(() => getCachedSummary(CURRENT_MONTH))
   const [txList, setTxList] = useState<TxRecord[]>(() => getCachedTransactions(CURRENT_MONTH) ?? [])
   const [loading, setLoading] = useState(() => getCachedSummary(CURRENT_MONTH) === null)
@@ -118,6 +135,18 @@ export default function TransactionHistory() {
     cacheRemoveTx(month, tx)
     cacheInvalidate(month)
     deleteTransaction(tx, month).catch(() => {})
+  }
+
+  function handleUpdated(oldTx: TxRecord, newTx: TxRecord) {
+    setTxList(prev => {
+      const filtered = prev.filter(t =>
+        !(t.day === oldTx.day && t.note === oldTx.note && t.amount === oldTx.amount && t.category === oldTx.category)
+      )
+      return [...filtered, newTx].sort((a, b) => b.day - a.day)
+    })
+    setEditingTx(null)
+    // Refresh summary from network after edit
+    fetchSummary(month).then(setSummary).catch(() => {})
   }
 
   useEffect(() => {
@@ -316,7 +345,7 @@ export default function TransactionHistory() {
 
                     <div className="flex flex-col gap-3">
                       {groups[day].map((tx, i) => (
-                        <TxRow key={i} tx={tx} index={i} onDelete={() => handleDelete(tx)} />
+                        <TxRow key={`${tx.day}-${tx.category}-${tx.note}-${tx.amount}-${i}`} tx={tx} index={i} onDelete={() => handleDelete(tx)} onTap={() => setEditingTx(tx)} />
                       ))}
                     </div>
                   </div>
@@ -332,6 +361,16 @@ export default function TransactionHistory() {
 
       {showNotifSheet && (
         <NotificationSheet onClose={() => setShowNotifSheet(false)} />
+      )}
+
+      {editingTx && (
+        <EditTransactionSheet
+          tx={editingTx}
+          month={month}
+          onClose={() => setEditingTx(null)}
+          onUpdated={handleUpdated}
+          onDeleted={(tx) => { handleDelete(tx); setEditingTx(null) }}
+        />
       )}
     </>
   )
