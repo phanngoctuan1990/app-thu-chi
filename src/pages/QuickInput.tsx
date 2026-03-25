@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import TopAppBar from '../components/TopAppBar'
-import { addTransaction, cacheInvalidate, fetchSummary, fetchTransactions } from '../services/api'
+import { addTransaction, cacheInvalidate, fetchSummary, fetchTransactions, getCachedSummary, getCachedTransactions } from '../services/api'
 import { formatVNDShort } from '../utils/formatCurrency'
 
 // ─── Category definitions ────────────────────────────────────────────────────
@@ -202,15 +202,22 @@ export default function QuickInput() {
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [shake, setShake] = useState(false)
-  const [totalSpent, setTotalSpent] = useState<number | null>(null)
-  const [todaySpent, setTodaySpent] = useState<number | null>(null)
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
-  const hiddenInputRef = useRef<HTMLInputElement>(null)
-  const dateInputRef = useRef<HTMLInputElement>(null)
-
   const todayDay = new Date().getDate()
   const currentMonth = new Date().getMonth() + 1
   const today = new Date().toISOString().split('T')[0]
+
+  const [totalSpent, setTotalSpent] = useState<number | null>(() => {
+    return getCachedSummary(currentMonth)?.totalSpent ?? null
+  })
+  const [todaySpent, setTodaySpent] = useState<number | null>(() => {
+    const txs = getCachedTransactions(currentMonth)
+    if (!txs) return null
+    return txs.filter(tx => tx.day === new Date().getDate() && tx.amount < 0)
+      .reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
+  })
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
+  const hiddenInputRef = useRef<HTMLInputElement>(null)
+  const dateInputRef = useRef<HTMLInputElement>(null)
 
   function loadStats() {
     Promise.all([fetchSummary(), fetchTransactions(currentMonth)])

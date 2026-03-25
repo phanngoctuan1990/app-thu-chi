@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import TopAppBar from '../components/TopAppBar'
 import FAB from '../components/FAB'
 import { formatVND, formatVNDShort } from '../utils/formatCurrency'
-import { cacheInvalidate, cacheRemoveTx, deleteTransaction, fetchSummary, fetchTransactions, type TxRecord, type Summary } from '../services/api'
+import { cacheInvalidate, cacheRemoveTx, deleteTransaction, fetchSummary, fetchTransactions, getCachedSummary, getCachedTransactions, type TxRecord, type Summary } from '../services/api'
 
 // ─── Category meta ────────────────────────────────────────────────────────────
 const CAT_META: Record<string, { icon: string; iconBg: string; iconColor: string; label: string }> = {
@@ -105,9 +105,9 @@ const CURRENT_DAY   = new Date().getDate()
 
 export default function TransactionHistory() {
   const [month, setMonth] = useState(CURRENT_MONTH)
-  const [summary, setSummary] = useState<Summary | null>(null)
-  const [txList, setTxList] = useState<TxRecord[]>([])
-  const [loading, setLoading] = useState(true)
+  const [summary, setSummary] = useState<Summary | null>(() => getCachedSummary(CURRENT_MONTH))
+  const [txList, setTxList] = useState<TxRecord[]>(() => getCachedTransactions(CURRENT_MONTH) ?? [])
+  const [loading, setLoading] = useState(() => getCachedSummary(CURRENT_MONTH) === null)
 
   function handleDelete(tx: TxRecord) {
     setTxList(prev => prev.filter(t =>

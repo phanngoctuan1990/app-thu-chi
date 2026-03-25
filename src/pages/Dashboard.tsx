@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import TopAppBar from '../components/TopAppBar'
 import FAB from '../components/FAB'
 import { formatVNDShort } from '../utils/formatCurrency'
-import { fetchSummary, type Summary } from '../services/api'
+import { fetchSummary, getCachedSummary, type Summary } from '../services/api'
 
 // ─── AnimatedNumber ───────────────────────────────────────────────────────────
 function AnimatedNumber({ value, className }: { value: number; className?: string }) {
@@ -157,12 +157,12 @@ const MONTH_NAMES = ['', 'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const [summary, setSummary] = useState<Summary | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [summary, setSummary] = useState<Summary | null>(() => getCachedSummary())
+  const [loading, setLoading] = useState(() => getCachedSummary() === null)
 
   useEffect(() => {
     fetchSummary()
-      .then(setSummary)
+      .then(s => { setSummary(s); setLoading(false) })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [])

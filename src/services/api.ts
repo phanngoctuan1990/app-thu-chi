@@ -71,6 +71,17 @@ export function cacheRemoveTx(month: number, tx: TxRecord) {
   } catch {}
 }
 
+// ─── Synchronous cache readers (for initial state) ───────────────────────────
+
+export function getCachedSummary(month?: number): Summary | null {
+  const m = month ?? new Date().getMonth() + 1
+  return cacheGet<Summary>(`summary_${m}`)
+}
+
+export function getCachedTransactions(month: number): TxRecord[] | null {
+  return cacheGet<TxRecord[]>(`transactions_${month}`)
+}
+
 // ─── Fetchers with cache ──────────────────────────────────────────────────────
 
 export async function fetchSummary(month?: number): Promise<Summary> {
