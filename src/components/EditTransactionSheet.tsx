@@ -188,7 +188,7 @@ export default function EditTransactionSheet({ tx, month, onClose, onUpdated, on
       <div
         className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-[100] rounded-t-[28px] pb-safe overflow-hidden"
         style={{
-          background: '#feffd5',
+          background: 'var(--sheet-bg)',
           transform: mounted ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
           boxShadow: '0 -8px 40px rgba(56,57,41,0.14)',

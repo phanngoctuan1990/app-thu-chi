@@ -6,6 +6,60 @@
   font-display: block;
 }
 
+/* ── Design token CSS variables ─────────────────────────────────────────────
+   Values are space-separated RGB channels (no "rgb()" wrapper) so that
+   Tailwind's / <alpha-value> syntax works: rgb(var(--c-bg) / 0.5)
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Surface scale – light (Sunset Bento cream) */
+  --c-bg:           254 255 213;   /* #feffd5 */
+  --c-surface-dim:  229 228 200;   /* #e5e4c8 */
+  --c-sc:           246 244 228;   /* #f6f4e4  surface-container */
+  --c-sc-low:       252 250 236;   /* #fcfaec  surface-container-low */
+  --c-sc-lowest:    255 255 255;   /* #ffffff  surface-container-lowest */
+  --c-sc-high:      240 239 219;   /* #f0efdb  surface-container-high */
+  --c-sc-highest:   235 233 210;   /* #ebe9d2  surface-container-highest */
+  /* Text */
+  --c-on-surface:   56  57  41;    /* #383929 */
+  --c-on-surface-var: 101 101 83;  /* #656553 */
+  /* Borders */
+  --c-outline:      130 130 110;   /* #82826e */
+  --c-outline-var:  187 186 164;   /* #bbbaa4 */
+  /* Inverse – dark card on light bg */
+  --c-inv-surface:  14  15  9;     /* #0e0f09 */
+  --c-inv-on-surface: 159 157 148; /* #9f9d94 */
+  /* Convenience for inline styles */
+  --sheet-bg:  #feffd5;
+  --glass-bg:  rgba(254, 255, 213, 0.72);
+}
+
+html.dark {
+  /* Surface scale – dark (Roasted Ember)
+     Page bg is very deep; cards are noticeably elevated above it.
+     Elevation ladder: bg < sc-low < sc < sc-lowest < sc-high < sc-highest */
+  --c-bg:           8   9   5;     /* #080905 – deep page bg */
+  --c-surface-dim:  6   7   4;     /* #060704 */
+  --c-sc-low:       24  26  16;    /* #181a10 – subtle raised surface */
+  --c-sc:           32  34  22;    /* #20221600 – surface-container */
+  --c-sc-lowest:    48  50  34;    /* #303222 – card "white" – clearly elevated */
+  --c-sc-high:      58  60  42;    /* #3a3c2a */
+  --c-sc-highest:   70  72  52;    /* #464834 */
+  /* Text */
+  --c-on-surface:   234 233 218;   /* #eae9da */
+  --c-on-surface-var: 178 177 156; /* #b2b19c */
+  /* Borders */
+  --c-outline:      118 118 100;   /* #767664 */
+  --c-outline-var:  52  54  38;    /* #343626 */
+  /* Inverse – light card on dark bg (SWAPPED) */
+  --c-inv-surface:  254 255 213;   /* #feffd5 */
+  --c-inv-on-surface: 56 57 41;    /* #383929 */
+  /* Convenience */
+  --sheet-bg:  #1e2014;
+  --glass-bg:  rgba(8, 9, 5, 0.88);
+  /* Card border glow (used in bento-shadow dark override) */
+  --card-border: rgba(255, 255, 255, 0.07);
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -20,13 +74,12 @@
   html {
     scroll-behavior: smooth;
     overscroll-behavior-y: none;
-    /* Prevent horizontal scroll */
     overflow-x: hidden;
   }
 
   body {
-    background-color: #feffd5;
-    color: #383929;
+    background-color: rgb(var(--c-bg));
+    color: rgb(var(--c-on-surface));
     font-family: 'Inter', sans-serif;
     margin: 0;
     overscroll-behavior-y: none;
@@ -41,7 +94,6 @@
     align-items: center;
   }
 
-  /* Tap highlight removal for mobile */
   button, a {
     -webkit-tap-highlight-color: transparent;
     cursor: pointer;
@@ -53,7 +105,6 @@
 }
 
 @layer components {
-  /* Material Symbols icon settings */
   .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     font-family: 'Material Symbols Outlined';
@@ -70,44 +121,49 @@
     user-select: none;
   }
 
-  /* Bento card shadow — extra diffused per design spec */
   .bento-shadow {
     box-shadow: 0 32px 32px -4px rgba(56, 57, 41, 0.06);
   }
-
   .bento-shadow-sm {
     box-shadow: 0 4px 20px rgba(56, 57, 41, 0.04);
   }
 
-  /* Glassmorphism panel — surface 60% opacity + 20px blur */
+  html.dark .bento-shadow {
+    box-shadow:
+      0 0 0 1px var(--card-border),
+      0 24px 40px rgba(0, 0, 0, 0.55);
+  }
+  html.dark .bento-shadow-sm {
+    box-shadow:
+      0 0 0 1px var(--card-border),
+      0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+
   .glass-panel {
-    background: rgba(254, 255, 213, 0.72);
+    background: var(--glass-bg);
     backdrop-filter: blur(20px) saturate(1.4);
     -webkit-backdrop-filter: blur(20px) saturate(1.4);
   }
 
-  /* App container — max-width 430px centered */
   .app-container {
     width: 100%;
     max-width: 430px;
     margin: 0 auto;
     min-height: 100dvh;
     position: relative;
-    background-color: #feffd5;
+    background-color: rgb(var(--c-bg));
   }
 
-  /* BottomNavBar — safe area aware */
   .nav-safe {
     padding-bottom: max(2rem, env(safe-area-inset-bottom));
   }
 
-  /* TopAppBar — safe area aware */
   .header-safe {
     padding-top: max(0px, env(safe-area-inset-top));
   }
 }
 
-/* ── Global keyframe animations ────────────────────────────────────────────── */
+/* ── Global keyframe animations ─────────────────────────────────────────────── */
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -167,36 +223,33 @@
   60%      { transform: translateX(-6px); }
   80%      { transform: translateX(6px); }
 }
+@keyframes theme-switch {
+  0%   { transform: scale(1) rotate(0deg); }
+  50%  { transform: scale(0.7) rotate(90deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
 
 @layer utilities {
-  /* Ghost border — outline-variant at 15% opacity */
   .border-ghost {
     border: 1px solid rgba(187, 186, 164, 0.15);
   }
-
-  /* Scale interactions */
-  .press-scale {
-    @apply transition-transform duration-150 active:scale-95;
+  html.dark .border-ghost {
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  .hover-scale {
-    @apply transition-transform duration-150 hover:scale-[1.02] active:scale-95;
-  }
+  .press-scale  { @apply transition-transform duration-150 active:scale-95; }
+  .hover-scale  { @apply transition-transform duration-150 hover:scale-[1.02] active:scale-95; }
 
-  /* Smooth momentum scrolling on iOS */
   .scroll-smooth-ios {
     -webkit-overflow-scrolling: touch;
     overflow-y: auto;
   }
 
-  /* Hide scrollbar */
   .scrollbar-none {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .scrollbar-none::-webkit-scrollbar {
-    display: none;
-  }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
 
   /* ── Skeleton loading ── */
   .skeleton {
@@ -205,11 +258,16 @@
     animation: skeleton-wave 1.6s ease-in-out infinite;
     border-radius: 12px;
   }
+  html.dark .skeleton {
+    background: linear-gradient(90deg, #303222 25%, #3a3c2a 50%, #303222 75%);
+    background-size: 400% 100%;
+    animation: skeleton-wave 1.6s ease-in-out infinite;
+  }
 
   /* ── Entrance animation classes ── */
-  .animate-fade-up   { animation: fade-up  0.5s cubic-bezier(0.16,1,0.3,1) both; }
-  .animate-fade-in   { animation: fade-in  0.4s ease both; }
-  .animate-scale-in  { animation: scale-in 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+  .animate-fade-up  { animation: fade-up  0.5s cubic-bezier(0.16,1,0.3,1) both; }
+  .animate-fade-in  { animation: fade-in  0.4s ease both; }
+  .animate-scale-in { animation: scale-in 0.35s cubic-bezier(0.16,1,0.3,1) both; }
 
   /* ── Delay utilities ── */
   .delay-50  { animation-delay:  50ms; }
@@ -218,6 +276,7 @@
   .delay-200 { animation-delay: 200ms; }
   .delay-250 { animation-delay: 250ms; }
   .delay-300 { animation-delay: 300ms; }
+  .delay-350 { animation-delay: 350ms; }
   .delay-400 { animation-delay: 400ms; }
   .delay-500 { animation-delay: 500ms; }
 }

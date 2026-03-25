@@ -4,12 +4,19 @@ import FAB from '../components/FAB'
 import BudgetAlert from '../components/BudgetAlert'
 import NotificationSheet from '../components/NotificationSheet'
 import { formatVNDShort } from '../utils/formatCurrency'
-import { fetchSummary, getCachedSummary, type Summary } from '../services/api'
+import {
+  fetchSummary, fetchTransactions,
+  getCachedSummary, getCachedTransactions,
+  type Summary, type TxRecord,
+} from '../services/api'
 import { useBudget } from '../hooks/useBudget'
 import { useSavingsGoal } from '../hooks/useSavingsGoal'
+import { useCurrency } from '../hooks/useCurrency'
 
 // ─── AnimatedNumber ───────────────────────────────────────────────────────────
-function AnimatedNumber({ value, className }: { value: number; className?: string }) {
+function AnimatedNumber({
+  value, className, fmt,
+}: { value: number; className?: string; fmt?: (n: number) => string }) {
   const [displayed, setDisplayed] = useState(0)
   const raf = useRef<number | undefined>(undefined)
   useEffect(() => {
@@ -25,10 +32,10 @@ function AnimatedNumber({ value, className }: { value: number; className?: strin
     raf.current = requestAnimationFrame(tick)
     return () => { if (raf.current) cancelAnimationFrame(raf.current) }
   }, [value])
-  return <span className={className}>{formatVNDShort(displayed)}</span>
+  return <span className={className}>{(fmt ?? formatVNDShort)(displayed)}</span>
 }
 
-// ─── Animated Sparkline ───────────────────────────────────────────────────────
+// ─── Animated Sparkline (mini, for invest card) ───────────────────────────────
 function Sparkline({ values }: { values: number[] }) {
   const max = Math.max(...values, 1)
   return (
@@ -52,6 +59,81 @@ function Sparkline({ values }: { values: number[] }) {
   )
 }
 
+// ─── Weekly Bar Chart ─────────────────────────────────────────────────────────
+function WeeklyBarChart({ txs, month, fmt }: { txs: TxRecord[]; month: number; fmt: (n: number) => string }) {
+  const now = new Date()
+  const currentWeek = Math.floor((now.getDate() - 1) / 7)
+
+  // Group spending by week (0-indexed: week0 = days 1–7, etc.)
+  const weekly = [0, 0, 0, 0, 0]
+  txs.filter(tx => tx.amount < 0).forEach(tx => {
+    const w = Math.min(Math.floor((tx.day - 1) / 7), 4)
+    weekly[w] += Math.abs(tx.amount)
+  })
+
+  // Only show weeks that exist in the month
+  const year = now.getFullYear()
+  const daysInMonth = new Date(year, month, 0).getDate()
+  const numWeeks = Math.ceil(daysInMonth / 7)
+  const weeks = weekly.slice(0, numWeeks)
+
+  const max = Math.max(...weeks, 1)
+  const weekLabels = ['T1', 'T2', 'T3', 'T4', 'T5']
+
+  return (
+    <div className="flex items-end gap-2 h-24">
+      {weeks.map((val, i) => {
+        const isCurrent = i === currentWeek && month === now.getMonth() + 1
+        const isMax = val === max && max > 0
+        const heightPct = Math.max((val / max) * 100, 6)
+        return (
+          <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+            {/* Amount label above bar */}
+            <span
+              className="font-label text-[9px] font-bold leading-none transition-opacity duration-300"
+              style={{ color: isCurrent ? '#bf2a02' : '#38392960', opacity: val > 0 ? 1 : 0 }}
+            >
+              {fmt(val)}
+            </span>
+            {/* Bar */}
+            <div className="w-full flex-1 flex items-end rounded-t-full overflow-hidden relative"
+              style={{ minHeight: 60 }}
+            >
+              <div
+                className="w-full rounded-[6px] relative overflow-hidden"
+                style={{
+                  height: `${heightPct}%`,
+                  background: isCurrent
+                    ? 'linear-gradient(180deg, #bf2a02 0%, #ffac99 100%)'
+                    : isMax
+                    ? 'linear-gradient(180deg, #e57a65 0%, #ffcfc2 100%)'
+                    : '#38392914',
+                  animation: 'bar-grow 0.7s cubic-bezier(0.16,1,0.3,1) both',
+                  animationDelay: `${i * 100}ms`,
+                  transformOrigin: 'bottom',
+                  minHeight: val > 0 ? 6 : 4,
+                }}
+              >
+                {isCurrent && (
+                  <div className="absolute inset-0 opacity-30"
+                    style={{ backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.3) 2px, rgba(255,255,255,0.3) 3px)' }} />
+                )}
+              </div>
+            </div>
+            {/* Week label */}
+            <span
+              className="font-label text-[10px] font-semibold"
+              style={{ color: isCurrent ? '#bf2a02' : '#38392970' }}
+            >
+              {weekLabels[i]}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── Animated Donut Chart ─────────────────────────────────────────────────────
 function DonutChart({ compulsory, lifestyle, invest, total }: {
   compulsory: number; lifestyle: number; invest: number; total: number
@@ -69,9 +151,7 @@ function DonutChart({ compulsory, lifestyle, invest, total }: {
   return (
     <div className="relative w-32 h-32 shrink-0">
       <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-        {/* Track */}
         <circle cx="18" cy="18" r={r} fill="none" stroke="#e5e4c8" strokeWidth="4" />
-        {/* Compulsory arc */}
         <circle
           cx="18" cy="18" r={r} fill="none"
           stroke="#82826e" strokeWidth="4"
@@ -83,7 +163,6 @@ function DonutChart({ compulsory, lifestyle, invest, total }: {
             ['--circ' as string]: circ,
           }}
         />
-        {/* Lifestyle arc */}
         <circle
           cx="18" cy="18" r={r} fill="none"
           stroke="#bf2a02" strokeWidth="4"
@@ -96,7 +175,6 @@ function DonutChart({ compulsory, lifestyle, invest, total }: {
             ['--circ' as string]: circ - compDash,
           }}
         />
-        {/* Invest arc */}
         <circle
           cx="18" cy="18" r={r} fill="none"
           stroke="#007075" strokeWidth="4"
@@ -113,6 +191,96 @@ function DonutChart({ compulsory, lifestyle, invest, total }: {
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="font-label font-bold text-lg leading-none">{percent}%</span>
         <span className="font-label text-[8px] text-outline uppercase tracking-wider mt-0.5">Đã dùng</span>
+      </div>
+    </div>
+  )
+}
+
+// ─── Top 3 Categories bar list ────────────────────────────────────────────────
+const CAT_COLOR: Record<string, string> = {
+  'Ăn uống sinh hoạt':    '#2e7d32',
+  'Mua hàng':             '#e65100',
+  'Phương tiện di chuyển':'#006064',
+  'Chi tiêu bắt buộc':    '#455a64',
+  'Đi chơi':              '#1565c0',
+  'Đầu tư':               '#6a1b9a',
+  'Tiết kiệm':            '#558b2f',
+  'Thu nhập':             '#880e4f',
+  'Chi tiêu khác':        '#f57f17',
+}
+const CAT_ICON: Record<string, string> = {
+  'Ăn uống sinh hoạt':    'restaurant',
+  'Mua hàng':             'shopping_bag',
+  'Phương tiện di chuyển':'directions_car',
+  'Chi tiêu bắt buộc':    'receipt_long',
+  'Đi chơi':              'celebration',
+  'Đầu tư':               'trending_up',
+  'Tiết kiệm':            'savings',
+  'Thu nhập':             'payments',
+  'Chi tiêu khác':        'more_horiz',
+}
+
+function TopCategoriesCard({ categories, fmt }: { categories: Record<string, number>; fmt: (n: number) => string }) {
+  const top3 = Object.entries(categories)
+    .filter(([, v]) => v > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+
+  if (top3.length === 0) return null
+
+  const maxVal = top3[0][1]
+  const medals = ['🥇', '🥈', '🥉']
+
+  return (
+    <div className="col-span-2 bg-surface-container-lowest rounded-[24px] p-6 bento-shadow animate-fade-up delay-250">
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="font-headline font-bold text-base">Top danh mục</h3>
+        <span className="font-label text-[10px] text-outline uppercase tracking-wider bg-surface-container px-2 py-1 rounded-full">
+          Chi nhiều nhất
+        </span>
+      </div>
+      <div className="flex flex-col gap-4">
+        {top3.map(([cat, val], i) => {
+          const color = CAT_COLOR[cat] ?? '#383929'
+          const icon = CAT_ICON[cat] ?? 'category'
+          const barPct = (val / maxVal) * 100
+
+          return (
+            <div key={cat} className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm leading-none">{medals[i]}</span>
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                    style={{ background: color + '18' }}
+                  >
+                    <span
+                      className="material-symbols-outlined text-[14px]"
+                      style={{ color, fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}
+                    >
+                      {icon}
+                    </span>
+                  </div>
+                  <span className="font-body text-sm text-on-surface font-medium">{cat}</span>
+                </div>
+                <AnimatedNumber value={val} fmt={fmt} className="font-label text-sm font-bold" style={{ color } as React.CSSProperties} />
+              </div>
+              {/* Animated progress bar */}
+              <div className="h-1.5 bg-surface-container rounded-full overflow-hidden ml-[52px]">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${barPct}%`,
+                    background: `linear-gradient(90deg, ${color}80, ${color})`,
+                    animation: 'bar-grow 0.8s cubic-bezier(0.16,1,0.3,1) both',
+                    animationDelay: `${i * 150 + 100}ms`,
+                    transformOrigin: 'left',
+                  }}
+                />
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -137,15 +305,54 @@ function SkeletonGrid() {
         <div className="skeleton h-3 w-16 mb-2" />
         <div className="skeleton h-7 w-24" />
       </div>
+      {/* Weekly chart skeleton */}
+      <div className="col-span-2 rounded-[24px] p-6 bg-surface-container-lowest bento-shadow">
+        <div className="skeleton h-4 w-36 mb-5" />
+        <div className="flex items-end gap-2 h-24">
+          {[60, 85, 40, 100].map((h, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-2">
+              <div className="skeleton w-full rounded-[6px]" style={{ height: `${h * 0.6}px` }} />
+              <div className="skeleton h-2.5 w-4" />
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Compare + peak day skeleton */}
+      <div className="rounded-[24px] p-5 bg-surface-container-lowest bento-shadow-sm">
+        <div className="skeleton h-3 w-20 mb-3" />
+        <div className="skeleton h-5 w-16 mb-1" />
+        <div className="skeleton h-5 w-16" />
+      </div>
+      <div className="rounded-[24px] p-5 bg-surface-container-lowest bento-shadow-sm">
+        <div className="skeleton h-3 w-20 mb-3" />
+        <div className="skeleton h-10 w-10 rounded-full mb-1" />
+        <div className="skeleton h-3 w-16" />
+      </div>
+      {/* Donut skeleton */}
       <div className="col-span-2 rounded-[24px] p-6 bg-surface-container-lowest bento-shadow">
         <div className="skeleton h-4 w-32 mb-5" />
         <div className="flex gap-6">
-          <div className="skeleton w-32 h-32 rounded-full shrink-0" style={{ borderRadius: '50%' }} />
+          <div className="skeleton w-32 h-32 shrink-0" style={{ borderRadius: '50%' }} />
           <div className="flex-1 space-y-3">
             <div className="skeleton h-3 w-full" />
             <div className="skeleton h-3 w-4/5" />
             <div className="skeleton h-3 w-3/5" />
           </div>
+        </div>
+      </div>
+      {/* Top categories skeleton */}
+      <div className="col-span-2 rounded-[24px] p-6 bg-surface-container-lowest bento-shadow">
+        <div className="skeleton h-4 w-28 mb-5" />
+        <div className="flex flex-col gap-4">
+          {[80, 55, 35].map((w, i) => (
+            <div key={i} className="flex flex-col gap-1.5">
+              <div className="flex justify-between">
+                <div className="skeleton h-3 w-32" />
+                <div className="skeleton h-3 w-12" />
+              </div>
+              <div className="skeleton h-1.5 rounded-full ml-12" style={{ width: `${w}%` }} />
+            </div>
+          ))}
         </div>
       </div>
       <div className="col-span-2 rounded-[24px] p-6 bg-inverse-surface">
@@ -161,22 +368,27 @@ const MONTH_NAMES = ['', 'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Dashboard() {
+  const now = new Date()
+  const currentMonth = now.getMonth() + 1
+  const lastMonth = currentMonth === 1 ? 12 : currentMonth - 1
+
   const [summary, setSummary] = useState<Summary | null>(() => getCachedSummary())
+  const [txs, setTxs] = useState<TxRecord[] | null>(() => getCachedTransactions(currentMonth))
+  const [lastSummary, setLastSummary] = useState<Summary | null>(() => getCachedSummary(lastMonth))
   const [loading, setLoading] = useState(() => getCachedSummary() === null)
   const [showNotifSheet, setShowNotifSheet] = useState(false)
   const { threshold } = useBudget()
   const { goal } = useSavingsGoal()
+  const { formatShort, currency } = useCurrency()
 
   useEffect(() => {
-    fetchSummary()
-      .then(s => { setSummary(s); setLoading(false) })
-      .catch(console.error)
-      .finally(() => setLoading(false))
+    fetchSummary().then(s => { setSummary(s); setLoading(false) }).catch(() => setLoading(false))
+    fetchTransactions(currentMonth).then(setTxs).catch(console.error)
+    fetchSummary(lastMonth).then(setLastSummary).catch(console.error)
   }, [])
 
-  const now = new Date()
   const year = now.getFullYear()
-  const month = summary?.month ?? (now.getMonth() + 1)
+  const month = summary?.month ?? currentMonth
 
   const income     = summary?.income ?? 0
   const spent      = summary?.totalSpent ?? 0
@@ -187,6 +399,19 @@ export default function Dashboard() {
     + (summary?.categories['Chi tiêu khác'] ?? 0) + (summary?.categories['Đi chơi'] ?? 0)
 
   const spentPct = income > 0 ? Math.min((spent / income) * 100, 100) : 0
+
+  // ── Derived stats from transactions ────────────────────────────────────────
+  const lastSpent = lastSummary?.totalSpent ?? 0
+  const monthDelta = lastSpent > 0 ? ((spent - lastSpent) / lastSpent) * 100 : 0
+  const isSpendingMore = monthDelta > 0
+
+  // Peak spending day
+  const daySpend: Record<number, number> = {}
+  ;(txs ?? []).filter(tx => tx.amount < 0).forEach(tx => {
+    daySpend[tx.day] = (daySpend[tx.day] ?? 0) + Math.abs(tx.amount)
+  })
+  const topDayEntry = Object.entries(daySpend).sort((a, b) => Number(b[1]) - Number(a[1]))[0]
+  const peakDay = topDayEntry ? { day: Number(topDayEntry[0]), amount: topDayEntry[1] } : null
 
   return (
     <>
@@ -204,13 +429,9 @@ export default function Dashboard() {
           </h2>
         </div>
 
-        {/* ── Budget alert (shown even during loading if threshold set + data cached) ── */}
+        {/* ── Budget alert ── */}
         {!loading && threshold > 0 && (
-          <BudgetAlert
-            spent={spent}
-            threshold={threshold}
-            onEdit={() => setShowNotifSheet(true)}
-          />
+          <BudgetAlert spent={spent} threshold={threshold} onEdit={() => setShowNotifSheet(true)} />
         )}
 
         {loading ? (
@@ -235,8 +456,8 @@ export default function Dashboard() {
                 </div>
                 <p className="font-body font-medium text-outline text-sm">Tổng thu nhập</p>
                 <p className="font-label font-bold text-[28px] tracking-tight mt-1 leading-none">
-                  <AnimatedNumber value={income} />
-                  <span className="text-sm font-normal text-outline ml-1">VND</span>
+                  <AnimatedNumber value={income} fmt={formatShort} />
+                  <span className="text-sm font-normal text-outline ml-1">{currency}</span>
                 </p>
                 <div className="w-full h-1.5 bg-surface-dim rounded-full overflow-hidden mt-4">
                   <div
@@ -253,7 +474,7 @@ export default function Dashboard() {
                     className="flex items-center gap-1 font-label text-[10px] text-primary/70 hover:text-primary transition-colors active:opacity-70"
                   >
                     <span className="material-symbols-outlined text-[13px]">tune</span>
-                    {threshold > 0 ? `Ngưỡng: ${formatVNDShort(threshold)}` : 'Đặt ngưỡng'}
+                    {threshold > 0 ? `Ngưỡng: ${formatShort(threshold)}` : 'Đặt ngưỡng'}
                   </button>
                 </div>
               </div>
@@ -268,7 +489,7 @@ export default function Dashboard() {
                 </span>
                 <p className="font-body text-xs text-outline">Tổng chi tiêu</p>
                 <p className="font-label font-bold text-xl mt-1 text-on-surface">
-                  <AnimatedNumber value={spent} />
+                  <AnimatedNumber value={spent} fmt={formatShort} />
                 </p>
                 {income > 0 && (
                   <p className="font-label text-[10px] text-outline mt-0.5">
@@ -293,14 +514,105 @@ export default function Dashboard() {
                 </span>
                 <p className="font-body text-xs text-outline">Đầu tư</p>
                 <p className="font-label font-bold text-xl mt-1 text-on-surface">
-                  <AnimatedNumber value={invest} />
+                  <AnimatedNumber value={invest} fmt={formatShort} />
                 </p>
               </div>
               <Sparkline values={[2, 3, 5, 4, invest > 0 ? 6 : 2]} />
             </div>
 
+            {/* ── Weekly bar chart ── */}
+            {txs && txs.length > 0 && (
+              <div className="col-span-2 bg-surface-container-lowest rounded-[24px] p-6 bento-shadow animate-fade-up delay-200">
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="font-headline font-bold text-base">Chi tiêu theo tuần</h3>
+                  <div className="flex items-center gap-1.5 bg-surface-container px-2 py-1 rounded-full">
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                    <span className="font-label text-[10px] text-outline">Tuần hiện tại</span>
+                  </div>
+                </div>
+                <WeeklyBarChart txs={txs} month={month} fmt={formatShort} />
+              </div>
+            )}
+
+            {/* ── Month comparison + Peak day ── */}
+            {/* Month vs last month */}
+            <div className="bg-surface-container-lowest rounded-[24px] p-5 bento-shadow animate-fade-up delay-200 flex flex-col justify-between">
+              <div>
+                <p className="font-label text-[10px] uppercase tracking-wider text-outline mb-3">So sánh tháng</p>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-baseline gap-1">
+                    <span className="font-label text-[10px] text-outline w-16 shrink-0">Tháng {lastMonth}</span>
+                    <span className="font-label font-bold text-sm text-on-surface/60">
+                      {formatShort(lastSpent)}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="font-label text-[10px] text-outline w-16 shrink-0">Tháng {month}</span>
+                    <span className="font-label font-bold text-sm text-on-surface">
+                      {formatShort(spent)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              {lastSpent > 0 && (
+                <div
+                  className="mt-4 flex items-center gap-1.5 px-3 py-2 rounded-[12px]"
+                  style={{
+                    background: isSpendingMore ? '#bf2a0210' : '#2e7d3210',
+                  }}
+                >
+                  <span
+                    className="material-symbols-outlined text-[16px]"
+                    style={{
+                      color: isSpendingMore ? '#bf2a02' : '#2e7d32',
+                      fontVariationSettings: "'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24",
+                    }}
+                  >
+                    {isSpendingMore ? 'trending_up' : 'trending_down'}
+                  </span>
+                  <span
+                    className="font-label text-xs font-bold"
+                    style={{ color: isSpendingMore ? '#bf2a02' : '#2e7d32' }}
+                  >
+                    {isSpendingMore ? '+' : ''}{Math.round(monthDelta)}%
+                  </span>
+                  <span className="font-label text-[10px] text-outline">so với tháng trước</span>
+                </div>
+              )}
+            </div>
+
+            {/* Peak spending day */}
+            <div className="bg-surface-container-lowest rounded-[24px] p-5 bento-shadow animate-fade-up delay-250 flex flex-col justify-between">
+              <p className="font-label text-[10px] uppercase tracking-wider text-outline mb-3">Ngày chi nhiều</p>
+              {peakDay ? (
+                <>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <div
+                      className="w-14 h-14 rounded-[16px] flex flex-col items-center justify-center mb-2 relative overflow-hidden"
+                      style={{ background: 'linear-gradient(135deg, #bf2a0215, #ffac9920)' }}
+                    >
+                      <span className="font-label font-black text-2xl leading-none text-primary">
+                        {peakDay.day}
+                      </span>
+                      <span className="font-label text-[8px] text-outline uppercase tracking-wider">
+                        Tháng {month}
+                      </span>
+                    </div>
+                    <p className="font-label font-bold text-sm text-on-surface">
+                      {formatShort(peakDay.amount)}
+                    </p>
+                    <p className="font-label text-[10px] text-outline mt-0.5">chi trong một ngày</p>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center">
+                  <span className="font-label text-xs text-outline">Chưa có dữ liệu</span>
+                </div>
+              )}
+            </div>
+
             {/* Spending Allocation */}
-            <div className="col-span-2 bg-surface-container-lowest rounded-[24px] p-6 bento-shadow border-ghost animate-fade-up delay-200">
+            <div className="col-span-2 bg-surface-container-lowest rounded-[24px] p-6 bento-shadow border-ghost animate-fade-up delay-300">
               <h3 className="font-headline font-bold text-base mb-5">Phân bổ chi tiêu</h3>
               <div className="flex items-center justify-between gap-6">
                 <DonutChart compulsory={compulsory} lifestyle={lifestyle} invest={invest} total={spent} />
@@ -315,16 +627,20 @@ export default function Dashboard() {
                         <div className={`w-1.5 h-4 rounded-full ${color} shrink-0`} />
                         <span className="font-body text-xs font-medium text-on-surface">{label}</span>
                       </div>
-                      <AnimatedNumber value={value} className="font-label text-xs font-bold" />
+                      <AnimatedNumber value={value} fmt={formatShort} className="font-label text-xs font-bold" />
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
+            {/* Top 3 Categories */}
+            {summary?.categories && (
+              <TopCategoriesCard categories={summary.categories} fmt={formatShort} />
+            )}
+
             {/* Savings card — dark */}
-            <div className="col-span-2 bg-inverse-surface rounded-[24px] p-6 relative overflow-hidden animate-fade-up delay-300">
-              {/* CSS dot-grid decorative background */}
+            <div className="col-span-2 bg-inverse-surface rounded-[24px] p-6 relative overflow-hidden animate-fade-up delay-350">
               <div
                 className="absolute inset-0 pointer-events-none opacity-100"
                 style={{
@@ -332,7 +648,6 @@ export default function Dashboard() {
                   backgroundSize: '16px 16px',
                 }}
               />
-              {/* Month number watermark */}
               <span
                 className="absolute bottom-0 right-2 font-black leading-none pointer-events-none select-none"
                 style={{ fontSize: 80, color: 'rgba(255,255,255,0.05)' }}
@@ -349,17 +664,15 @@ export default function Dashboard() {
                   </div>
                   {goal > 0 && (
                     <span className="font-label text-[10px] text-white/50 uppercase tracking-wider">
-                      Mục tiêu: {formatVNDShort(goal)}
+                      Mục tiêu: {formatShort(goal)}
                     </span>
                   )}
                 </div>
                 <p className="font-body text-xs text-outline-variant mb-1">Tổng tiết kiệm</p>
                 <p className="font-label font-bold text-2xl leading-none text-[#feffd5]">
-                  <AnimatedNumber value={savings} />
-                  <span className="text-sm font-normal text-outline-variant ml-1">VND</span>
+                  <AnimatedNumber value={savings} fmt={formatShort} />
+                  <span className="text-sm font-normal text-outline-variant ml-1">{currency}</span>
                 </p>
-
-                {/* Savings goal progress bar */}
                 {goal > 0 && (
                   <div className="mt-3">
                     <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
@@ -373,13 +686,12 @@ export default function Dashboard() {
                     </div>
                     <p className="font-label text-[10px] text-white/40 mt-1">
                       {savings >= goal
-                        ? '🎉 Đã đạt mục tiêu!'
-                        : `${Math.round((savings / goal) * 100)}% — còn ${formatVNDShort(goal - savings)}`
+                        ? 'Đã đạt mục tiêu!'
+                        : `${Math.round((savings / goal) * 100)}% — còn ${formatShort(goal - savings)}`
                       }
                     </p>
                   </div>
                 )}
-
                 <button
                   onClick={() => setShowNotifSheet(true)}
                   className="mt-4 bg-white/15 text-white px-4 py-2 rounded-full text-xs font-bold font-headline flex items-center gap-2 active:scale-95 transition-transform"
