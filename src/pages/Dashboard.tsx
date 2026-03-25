@@ -15,8 +15,8 @@ import { useCurrency } from '../hooks/useCurrency'
 
 // ─── AnimatedNumber ───────────────────────────────────────────────────────────
 function AnimatedNumber({
-  value, className, fmt,
-}: { value: number; className?: string; fmt?: (n: number) => string }) {
+  value, className, fmt, style,
+}: { value: number; className?: string; fmt?: (n: number) => string; style?: React.CSSProperties }) {
   const [displayed, setDisplayed] = useState(0)
   const raf = useRef<number | undefined>(undefined)
   useEffect(() => {
@@ -32,7 +32,7 @@ function AnimatedNumber({
     raf.current = requestAnimationFrame(tick)
     return () => { if (raf.current) cancelAnimationFrame(raf.current) }
   }, [value])
-  return <span className={className}>{(fmt ?? formatVNDShort)(displayed)}</span>
+  return <span className={className} style={style}>{(fmt ?? formatVNDShort)(displayed)}</span>
 }
 
 // ─── Animated Sparkline (mini, for invest card) ───────────────────────────────
