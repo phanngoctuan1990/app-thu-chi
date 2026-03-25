@@ -80,14 +80,21 @@ function WeeklyBarChart({ txs, month, fmt }: { txs: TxRecord[]; month: number; f
   const max = Math.max(...weeks, 1)
   const weekLabels = ['T1', 'T2', 'T3', 'T4', 'T5']
 
+  // Date range for each week column, e.g. "22–28"
+  const weekRanges = weeks.map((_, i) => {
+    const start = i * 7 + 1
+    const end = Math.min(start + 6, daysInMonth)
+    return `${start}–${end}`
+  })
+
   return (
-    <div className="flex items-end gap-2 h-24">
+    <div className="flex items-end gap-2 h-28">
       {weeks.map((val, i) => {
         const isCurrent = i === currentWeek && month === now.getMonth() + 1
         const isMax = val === max && max > 0
         const heightPct = Math.max((val / max) * 100, 6)
         return (
-          <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+          <div key={i} className="flex-1 flex flex-col items-center gap-1">
             {/* Amount label above bar */}
             <span
               className="font-label text-[9px] font-bold leading-none transition-opacity duration-300"
@@ -96,8 +103,8 @@ function WeeklyBarChart({ txs, month, fmt }: { txs: TxRecord[]; month: number; f
               {fmt(val)}
             </span>
             {/* Bar */}
-            <div className="w-full flex-1 flex items-end rounded-t-full overflow-hidden relative"
-              style={{ minHeight: 60 }}
+            <div className="w-full flex-1 flex items-end overflow-hidden relative"
+              style={{ minHeight: 56 }}
             >
               <div
                 className="w-full rounded-[6px] relative overflow-hidden"
@@ -120,12 +127,18 @@ function WeeklyBarChart({ txs, month, fmt }: { txs: TxRecord[]; month: number; f
                 )}
               </div>
             </div>
-            {/* Week label */}
+            {/* Week label + date range */}
             <span
-              className="font-label text-[10px] font-semibold"
+              className="font-label text-[10px] font-semibold leading-tight"
               style={{ color: isCurrent ? '#bf2a02' : '#38392970' }}
             >
               {weekLabels[i]}
+            </span>
+            <span
+              className="font-label text-[8px] leading-none"
+              style={{ color: isCurrent ? '#bf2a0290' : '#38392940' }}
+            >
+              {weekRanges[i]}
             </span>
           </div>
         )
