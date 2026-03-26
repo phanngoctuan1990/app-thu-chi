@@ -125,6 +125,8 @@ function parseVoiceInput(raw: string): { amount: number; note: string } {
     m => parseFloat(m[1].replace(',', '.')) * 1_000)
   // "X trăm"
   tryMatch(/(\d+)\s*trăm\b/i, m => parseInt(m[1]) * 100)
+  // Vietnamese dot-separated number: 29.100, 1.500.000
+  tryMatch(/\b(\d{1,3}(?:\.\d{3})+)\b/, m => parseInt(m[1].replace(/\./g, '')))
   // bare 4+ digit number
   tryMatch(/\b(\d{4,})\b/, m => parseInt(m[1]))
 
@@ -644,7 +646,7 @@ export default function QuickInput() {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Ghi chú? (Phở sáng, Grab đi làm...)"
-              className="bg-transparent border-none outline-none w-full font-body text-on-surface placeholder:text-outline/60 text-sm"
+              className="bg-transparent border-none outline-none w-full font-body text-on-surface placeholder:text-outline/60 text-base"
             />
           </div>
 
