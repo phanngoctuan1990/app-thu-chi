@@ -111,6 +111,9 @@ function parseVoiceInput(raw: string): { amount: number; note: string } {
     if (m) { amount = Math.round(compute(m)); amountMatch = m[0] }
   }
 
+  // "X triệu Y trăm Z nghìn" — most specific 3-part, must be before 2-part
+  tryMatch(/(\d+)\s*triệu\s+(\d+)\s*trăm\s+(\d+)\s*(?:nghìn|ngàn|k)?/i,
+    m => parseInt(m[1]) * 1_000_000 + parseInt(m[2]) * 100_000 + parseInt(m[3]) * 1_000)
   // "X triệu Y nghìn"
   tryMatch(/(\d+(?:[,.]\d+)?)\s*triệu\s+(\d+)\s*(?:nghìn|ngàn|k)?/i,
     m => parseFloat(m[1].replace(',', '.')) * 1_000_000 + parseInt(m[2]) * 1_000)
@@ -125,8 +128,8 @@ function parseVoiceInput(raw: string): { amount: number; note: string } {
     m => parseFloat(m[1].replace(',', '.')) * 1_000)
   // "X trăm"
   tryMatch(/(\d+)\s*trăm\b/i, m => parseInt(m[1]) * 100)
-  // Vietnamese dot-separated number: 29.100, 1.500.000
-  tryMatch(/\b(\d{1,3}(?:\.\d{3})+)\b/, m => parseInt(m[1].replace(/\./g, '')))
+  // Vietnamese dot-separated: 29.100, 1.500.000 — max 2 dot-groups to avoid SR misformat (e.g. 1.000.250.000)
+  tryMatch(/\b(\d{1,3}(?:\.\d{3}){1,2})\b/, m => parseInt(m[1].replace(/\./g, '')))
   // bare 4+ digit number
   tryMatch(/\b(\d{4,})\b/, m => parseInt(m[1]))
 
