@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useTheme } from '../hooks/useTheme'
 import { useCurrency } from '../hooks/useCurrency'
-import { getCachedSummary } from '../services/api'
+import { getCachedSummary, generateInviteCode } from '../services/api'
 import { formatVNDShort } from '../utils/formatCurrency'
+import { useAuth } from '../hooks/useAuth'
 
 interface Props {
   onClose: () => void
@@ -122,6 +123,10 @@ export default function SettingsSheet({ onClose }: Props) {
   const [platform, setPlatform] = useState<Platform>('ios')
   const { theme, toggleTheme } = useTheme()
   const { currency, setCurrency, exchangeRate } = useCurrency()
+  const { user, sheetConfig, logout } = useAuth()
+  const [inviteCode, setInviteCode] = useState('')
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const isDark = theme === 'dark'
   const steps = platform === 'ios' ? IOS_STEPS : ANDROID_STEPS
@@ -135,6 +140,23 @@ export default function SettingsSheet({ onClose }: Props) {
     setMounted(false)
     setTimeout(onClose, 300)
   }
+
+  const handleGenerateCode = useCallback(async () => {
+    if (!sheetConfig?.sheetId) return
+    setInviteLoading(true)
+    try {
+      const code = await generateInviteCode(sheetConfig.sheetId)
+      setInviteCode(code)
+    } catch {}
+    setInviteLoading(false)
+  }, [sheetConfig])
+
+  const handleCopyCode = useCallback(() => {
+    if (!inviteCode) return
+    navigator.clipboard.writeText(inviteCode)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }, [inviteCode])
 
   return (
     <>
@@ -180,6 +202,95 @@ export default function SettingsSheet({ onClose }: Props) {
         </div>
 
         <div className="overflow-y-auto max-h-[78dvh] px-6 pb-6 flex flex-col gap-5">
+
+          {/* ── 0. Account & Sharing ── */}
+          {user && (
+            <section>
+              <p className="font-label text-[10px] uppercase tracking-[0.2em] text-outline mb-3">Tài khoản</p>
+              <div className="bg-surface-container rounded-[20px] p-4 flex flex-col gap-4">
+                {/* User info */}
+                <div className="flex items-center gap-3">
+                  <img src={user.picture} alt={user.name}
+                    className="w-11 h-11 rounded-full bento-shadow-sm shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-headline font-bold text-sm text-on-surface truncate">{user.name}</p>
+                    <p className="font-label text-[10px] text-outline truncate">{user.email}</p>
+                  </div>
+                  <button
+                    onClick={() => { handleClose(); logout() }}
+                    className="shrink-0 px-3 py-1.5 rounded-full bg-surface-container-high font-label text-xs text-outline active:opacity-60 transition-opacity"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+
+                {/* Invite code (only for owners) */}
+                {sheetConfig?.role === 'owner' && (
+                  <div className="border-t border-outline-variant/10 pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="font-body text-sm font-semibold text-on-surface">Mời vợ/chồng dùng chung</p>
+                        <p className="font-label text-[10px] text-outline mt-0.5">Tạo mã để chia sẻ Sheet gia đình</p>
+                      </div>
+                      <span className="material-symbols-outlined text-[18px] text-primary"
+                        style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
+                        group_add
+                      </span>
+                    </div>
+
+                    {inviteCode ? (
+                      <button
+                        onClick={handleCopyCode}
+                        className="w-full bg-surface-container-lowest rounded-[14px] px-4 py-3 flex items-center justify-between active:scale-[0.98] transition-transform duration-150 bento-shadow-sm"
+                      >
+                        <div className="text-left">
+                          <p className="font-label text-[10px] text-outline uppercase tracking-wider mb-0.5">Mã mời</p>
+                          <p className="font-headline font-black text-2xl tracking-[0.15em] text-on-surface">{inviteCode}</p>
+                        </div>
+                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors duration-200 ${copied ? 'bg-secondary/15 text-secondary' : 'bg-primary/10 text-primary'}`}>
+                          <span className="material-symbols-outlined text-[14px]"
+                            style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
+                            {copied ? 'check' : 'content_copy'}
+                          </span>
+                          <span className="font-label text-xs font-bold">{copied ? 'Đã sao chép' : 'Sao chép'}</span>
+                        </div>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleGenerateCode}
+                        disabled={inviteLoading}
+                        className="w-full py-3 rounded-[14px] font-label font-bold text-sm text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-transform duration-150 disabled:opacity-60"
+                        style={{ background: 'linear-gradient(135deg, #bf2a02, #ff6b3d)' }}
+                      >
+                        {inviteLoading ? (
+                          <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <span className="material-symbols-outlined text-[16px]"
+                            style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
+                            generating_tokens
+                          </span>
+                        )}
+                        {inviteLoading ? 'Đang tạo...' : 'Tạo mã mời'}
+                      </button>
+                    )}
+
+                    <p className="font-label text-[10px] text-outline mt-2 text-center">
+                      Chia sẻ mã qua Zalo/Messenger. Mã dùng 1 lần.
+                    </p>
+                  </div>
+                )}
+
+                {/* Member badge */}
+                {sheetConfig?.role === 'member' && (
+                  <div className="border-t border-outline-variant/10 pt-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px] text-secondary"
+                      style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>group</span>
+                    <p className="font-body text-xs text-outline">Bạn đang dùng Sheet gia đình chung</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
 
           {/* ── 1. Dark Mode ── */}
           <section>
