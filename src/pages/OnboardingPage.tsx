@@ -54,17 +54,12 @@ export default function OnboardingPage({ user, accessToken, onComplete }: Props)
       setLoading(false)
       return
     }
-    try {
-      const token = await resolveToken()
-      await shareSheetWithGASOwner(token, sheetId)
-      const config: SheetConfig = { sheetId, role: 'owner' }
-      setSheetConfig(config)
-      onComplete(config)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi kết nối Sheet')
-    } finally {
-      setLoading(false)
-    }
+    // For pre-existing sheets, Drive API scope `drive.file` cannot access files
+    // created outside the app. Skip API share — user must share manually.
+    const config: SheetConfig = { sheetId, role: 'owner' }
+    setSheetConfig(config)
+    setLoading(false)
+    onComplete(config)
   }
 
   async function handleJoinByCode() {
@@ -207,13 +202,23 @@ export default function OnboardingPage({ user, accessToken, onComplete }: Props)
             />
           </div>
 
-          <div className="bg-surface-container rounded-[16px] px-4 py-3 flex items-start gap-2">
-            <span className="material-symbols-outlined text-[14px] text-outline mt-0.5 shrink-0"
-              style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>info</span>
-            <p className="font-body text-xs text-outline leading-relaxed">
-              Sheet cần có tab tên "Transactions" với cột: Date, Amount, Category, Note.
-              App sẽ tự động chia sẻ Sheet với hệ thống.
-            </p>
+          <div className="bg-surface-container rounded-[16px] px-4 py-3 flex flex-col gap-2">
+            <div className="flex items-start gap-2">
+              <span className="material-symbols-outlined text-[14px] text-outline mt-0.5 shrink-0"
+                style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>info</span>
+              <p className="font-body text-xs text-outline leading-relaxed">
+                Sheet cần có tab tên <strong>"Transactions"</strong> với cột: Date, Amount, Category, Note.
+              </p>
+            </div>
+            {import.meta.env.VITE_GAS_OWNER_EMAIL && (
+              <div className="flex items-start gap-2">
+                <span className="material-symbols-outlined text-[14px] text-primary mt-0.5 shrink-0"
+                  style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>share</span>
+                <p className="font-body text-xs text-outline leading-relaxed">
+                  Chia sẻ Sheet với <strong className="text-on-surface">{import.meta.env.VITE_GAS_OWNER_EMAIL}</strong> (quyền Editor) trước khi kết nối.
+                </p>
+              </div>
+            )}
           </div>
 
           {error && <p className="font-label text-sm text-error animate-fade-in">{error}</p>}
