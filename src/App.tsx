@@ -7,15 +7,17 @@ import QuickInput from './pages/QuickInput'
 import TransactionHistory from './pages/TransactionHistory'
 import LoginPage from './pages/LoginPage'
 import OnboardingPage from './pages/OnboardingPage'
-import { useAuth } from './hooks/useAuth'
-import type { SheetConfig } from './hooks/useAuth'
+import { useAuth, getStoredUser } from './hooks/useAuth'
+import type { AuthUser, SheetConfig } from './hooks/useAuth'
 
 export default function App() {
   const [splashDone, setSplashDone] = useState(false)
-  const { user, sheetConfig, setSheetConfig } = useAuth()
+  const { sheetConfig, setSheetConfig } = useAuth()
+  const [user, setUser] = useState<AuthUser | null>(getStoredUser)
   const [accessToken, setAccessToken] = useState('')
 
-  function handleLoggedIn(token: string) {
+  function handleLoggedIn(authUser: AuthUser, token: string) {
+    setUser(authUser)
     setAccessToken(token)
   }
 
@@ -29,7 +31,7 @@ export default function App() {
 
       {/* Auth gate */}
       {!user ? (
-        <LoginPage onLoggedIn={handleLoggedIn} />
+        <LoginPage onLoggedIn={(u, t) => handleLoggedIn(u, t)} />
       ) : !sheetConfig ? (
         <OnboardingPage
           user={user}

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import type { AuthUser } from '../hooks/useAuth'
 
 interface Props {
-  onLoggedIn: (accessToken: string) => void
+  onLoggedIn: (user: AuthUser, accessToken: string) => void
 }
 
 export default function LoginPage({ onLoggedIn }: Props) {
@@ -27,8 +28,8 @@ export default function LoginPage({ onLoggedIn }: Props) {
     setLoading(true)
     setError('')
     try {
-      const { accessToken } = await login()
-      onLoggedIn(accessToken)
+      const { user, accessToken } = await login()
+      onLoggedIn(user, accessToken)
     } catch (err) {
       setError('Đăng nhập thất bại, thử lại')
       setLoading(false)
