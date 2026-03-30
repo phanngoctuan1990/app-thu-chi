@@ -65,8 +65,11 @@ function WeeklyBarChart({ txs, month, fmt }: { txs: TxRecord[]; month: number; f
   const currentWeek = Math.floor((now.getDate() - 1) / 7)
 
   // Group spending by week (0-indexed: week0 = days 1–7, etc.)
+  // Exclude Tiết kiệm & Đầu tư to match "Tổng chi tiêu" definition
+  // Both Vietnamese (old GAS) and English (new GAS) names
+  const NON_SPENDING = new Set(['Tiết kiệm', 'Đầu tư', 'Savings', 'Invest'])
   const weekly = [0, 0, 0, 0, 0]
-  txs.filter(tx => tx.amount < 0).forEach(tx => {
+  txs.filter(tx => tx.amount < 0 && !NON_SPENDING.has(tx.category)).forEach(tx => {
     const w = Math.min(Math.floor((tx.day - 1) / 7), 4)
     weekly[w] += Math.abs(tx.amount)
   })
