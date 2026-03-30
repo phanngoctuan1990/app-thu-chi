@@ -13,7 +13,13 @@ interface Props {
 }
 
 export default function OnboardingPage({ user, accessToken, onComplete }: Props) {
-  const { setSheetConfig } = useAuth()
+  const { setSheetConfig, getAccessToken } = useAuth()
+
+  // Get a valid token: use prop if available (fresh login), otherwise request new one
+  async function resolveToken(): Promise<string> {
+    if (accessToken) return accessToken
+    return getAccessToken()
+  }
   const [flow, setFlow] = useState<Flow>('choose')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -25,8 +31,9 @@ export default function OnboardingPage({ user, accessToken, onComplete }: Props)
     setLoading(true)
     setError('')
     try {
-      const sheetId = await createNewSheet(accessToken, user.name)
-      await shareSheetWithGASOwner(accessToken, sheetId)
+      const token = await resolveToken()
+      const sheetId = await createNewSheet(token, user.name)
+      await shareSheetWithGASOwner(token, sheetId)
       const config: SheetConfig = { sheetId, role: 'owner' }
       setSheetConfig(config)
       onComplete(config)
@@ -48,7 +55,8 @@ export default function OnboardingPage({ user, accessToken, onComplete }: Props)
       return
     }
     try {
-      await shareSheetWithGASOwner(accessToken, sheetId)
+      const token = await resolveToken()
+      await shareSheetWithGASOwner(token, sheetId)
       const config: SheetConfig = { sheetId, role: 'owner' }
       setSheetConfig(config)
       onComplete(config)
