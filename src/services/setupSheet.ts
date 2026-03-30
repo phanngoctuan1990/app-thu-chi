@@ -1,26 +1,25 @@
-const HEADER_ROW = ['Date', 'Amount', 'Category', 'Note', 'User', 'Timestamp']
+const GAS_URL = import.meta.env.VITE_GAS_URL as string
 
-/** Create a new Google Sheet with the Transactions tab + header row */
+/** Create a new blank Google Sheet in user's Drive, then call GAS to initialize the template */
 export async function createNewSheet(accessToken: string, userName: string): Promise<string> {
+  // Step 1: Create blank spreadsheet via Sheets API (in user's Drive)
   const res = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      properties: { title: `Thu Chi — ${userName}` },
-      sheets: [{
-        properties: { title: 'Transactions', index: 0 },
-        data: [{
-          startRow: 0, startColumn: 0,
-          rowData: [{
-            values: HEADER_ROW.map(v => ({ userEnteredValue: { stringValue: v } })),
-          }],
-        }],
-      }],
-    }),
+    body: JSON.stringify({ properties: { title: `Thu Chi — ${userName}` } }),
   })
   const data = await res.json()
   if (!data.spreadsheetId) throw new Error(data.error?.message || 'Tạo Sheet thất bại')
-  return data.spreadsheetId as string
+  const sheetId = data.spreadsheetId as string
+
+  // Step 2: Call GAS to initialize the block-format template (12 month tabs)
+  if (GAS_URL) {
+    const initRes = await fetch(`${GAS_URL}?action=initTemplate&sheetId=${sheetId}`)
+    const initData = await initRes.json().catch(() => ({}))
+    if ((initData as any).error) throw new Error((initData as any).error)
+  }
+
+  return sheetId
 }
 
 /** Share an existing Sheet with the GAS owner (editor permission) */
@@ -34,8 +33,7 @@ export async function shareSheetWithGASOwner(accessToken: string, sheetId: strin
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        role: 'writer',
-        type: 'user',
+        role: 'writer', type: 'user',
         emailAddress: gasOwnerEmail,
         sendNotificationEmail: false,
       }),
