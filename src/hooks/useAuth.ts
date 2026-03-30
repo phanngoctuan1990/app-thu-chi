@@ -91,8 +91,7 @@ export function useAuth() {
   const logout = useCallback(() => {
     localStorage.removeItem(KEY_USER)
     localStorage.removeItem(KEY_SHEET)
-    setUser(null)
-    setSheetState(null)
+    window.location.reload()
   }, [])
 
   return { user, sheetConfig, login, getAccessToken, setSheetConfig, logout }
