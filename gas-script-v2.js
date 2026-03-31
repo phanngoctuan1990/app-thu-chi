@@ -131,28 +131,25 @@ function getSummary(sheetId, month) {
   var sheet = ss.getSheetByName('Tháng ' + month);
   if (!sheet) return { month: month, income: 0, totalSpent: 0, categories: {} };
 
-  var data = sheet.getRange(1, SUMMARY_COL, sheet.getLastRow(), 2).getValues();
-  var catMap = {};
-  for (var i = 0; i < data.length; i++) {
-    var name = data[i][0], amount = data[i][1];
-    if (typeof name === 'string' && name.trim() && typeof amount === 'number' && amount > 0)
-      catMap[name.trim()] = amount;
-  }
+  var spendingCats = ['Ăn uống sinh hoạt', 'Mua hàng', 'Chi tiêu bắt buộc', 'Chi tiêu khác',
+                      'Phương tiện di chuyển', 'Đi chơi'];
+  var cats = {};
+  var totalSpent = 0;
+
+  spendingCats.forEach(function(cat) {
+    var v = getBlockTotal(sheet, cat);
+    cats[cat] = v;
+    totalSpent += v;
+  });
+
+  cats['Đầu tư']   = getBlockTotal(sheet, 'Đầu tư');
+  cats['Tiết kiệm'] = getBlockTotal(sheet, 'Tiết kiệm');
 
   return {
-    month: month,
-    income:     catMap['Thu nhập'] || 0,
-    totalSpent: catMap['Tổng chi'] || 0,
-    categories: {
-      'Ăn uống sinh hoạt':     catMap['Ăn uống sinh hoạt']     || 0,
-      'Mua hàng':               catMap['Mua hàng']               || 0,
-      'Chi tiêu bắt buộc':     catMap['Chi tiêu bắt buộc']     || 0,
-      'Chi tiêu khác':         catMap['Chi tiêu khác']          || 0,
-      'Phương tiện di chuyển': catMap['Phương tiện di chuyển'] || 0,
-      'Đi chơi':               catMap['Đi chơi']                || 0,
-      'Đầu tư':                getBlockTotal(sheet, 'Đầu tư'),
-      'Tiết kiệm':             getBlockTotal(sheet, 'Tiết kiệm'),
-    }
+    month:      month,
+    income:     getBlockTotal(sheet, 'Thu nhập'),
+    totalSpent: totalSpent,
+    categories: cats,
   };
 }
 
@@ -178,7 +175,7 @@ function getTransactions(sheetId, month) {
       if (!amount || amount === 0) continue;
       txs.push({
         day:      typeof day === 'number' ? day : 0,
-        category: CATEGORY_EN[cat] || cat,
+        category: cat,
         note:     (note && note !== '') ? String(note) : cat,
         amount:   isIncome[cat] ? amount : -amount,
       });
@@ -242,9 +239,7 @@ function deleteRow(sheetId, body) {
   var sheet = ss.getSheetByName('Tháng ' + month);
   if (!sheet) throw new Error('Không tìm thấy sheet Tháng ' + month);
 
-  var catVi = null;
-  for (var k in CATEGORY_EN) { if (CATEGORY_EN[k] === body.category) { catVi = k; break; } }
-  if (!catVi) catVi = body.category;
+  var catVi = body.category;
 
   var col = COLUMN_MAP[catVi];
   if (!col) throw new Error('Sai Category');

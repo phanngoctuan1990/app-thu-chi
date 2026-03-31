@@ -1,7 +1,7 @@
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const API_URL = (import.meta.env.VITE_GAS_URL as string | undefined)
-  || 'https://script.google.com/macros/s/AKfycbxiENDU8bn5-NXjm6F3tNCCnl0tqLR1sJYGx7oQVW7HrHMXRySKiUbcRHNk4McjN-EBCw/exec'
+  || 'https://script.google.com/macros/s/AKfycbzTj8OzpfRMgYGIUccq33Zf7r_x-nJlr0cdkPWmiKd75hOGe-mI5V-irynEY5moOuYUQw/exec'
 
 // Maps English category IDs → Vietnamese names stored in GAS
 const CATEGORY_VI: Record<string, string> = {
@@ -142,12 +142,13 @@ export async function fetchTransactions(month: number): Promise<TxRecord[]> {
 export async function addTransaction(data: Transaction): Promise<void> {
   const sheetId = getSheetId()
   const payload = {
-    date:     data.date,
-    amount:   data.amount,
-    category: CATEGORY_VI[data.category] ?? data.category,
-    note:     data.note,
+    date:      data.date,
+    amount:    data.amount,
+    category:  CATEGORY_VI[data.category] ?? data.category,
+    note:      data.note,
     sheetId,
-    userName: getUserName(),
+    userName:  getUserName(),
+    timestamp: new Date().toISOString(),
   }
   await fetch(API_URL, {
     method:  'POST',
