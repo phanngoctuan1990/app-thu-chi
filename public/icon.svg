@@ -1,25 +1,86 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Background -->
-  <rect width="512" height="512" rx="112" fill="#bf2a02"/>
-  <!-- Subtle warm gradient overlay -->
-  <rect width="512" height="512" rx="112" fill="url(#grad)" opacity="0.35"/>
-  <!-- Wallet body -->
-  <rect x="96" y="160" width="320" height="220" rx="28" fill="#ffffff" opacity="0.95"/>
-  <!-- Wallet flap -->
-  <rect x="96" y="160" width="320" height="72" rx="28" fill="#ffffff"/>
-  <rect x="96" y="204" width="320" height="28" fill="#ffffff"/>
-  <!-- Coin slot hole -->
-  <rect x="310" y="236" width="88" height="52" rx="26" fill="#feffd5"/>
-  <!-- Coin circle -->
-  <circle cx="354" cy="262" r="22" fill="#ffac99"/>
-  <circle cx="354" cy="262" r="14" fill="#bf2a02" opacity="0.6"/>
-  <!-- Horizontal lines inside wallet (money stacks) -->
-  <rect x="128" y="248" width="140" height="10" rx="5" fill="#bf2a02" opacity="0.2"/>
-  <rect x="128" y="272" width="100" height="10" rx="5" fill="#bf2a02" opacity="0.15"/>
   <defs>
-    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#ffac99"/>
-      <stop offset="100%" stop-color="#0e0f09"/>
-    </linearGradient>
+    <radialGradient id="bg" cx="35%" cy="28%" r="75%">
+      <stop offset="0%" stop-color="#d4321a"/>
+      <stop offset="100%" stop-color="#8a1c00"/>
+    </radialGradient>
+    <radialGradient id="blush" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffb3a7" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#ffb3a7" stop-opacity="0"/>
+    </radialGradient>
   </defs>
+
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- ── Cat body ── -->
+  <!-- Main body ellipse -->
+  <ellipse cx="228" cy="408" rx="122" ry="88" fill="white"/>
+
+  <!-- Raised right arm (cat's left = viewer's right) -->
+  <!-- Arm as a rounded path going up from shoulder -->
+  <path d="M298,325 C335,295 375,255 368,195 C365,178 350,172 338,182 C328,228 295,295 262,338 Z" fill="white"/>
+  <!-- Paw pad at top -->
+  <ellipse cx="356" cy="186" rx="30" ry="24" fill="white"/>
+  <!-- Paw toe divots -->
+  <path d="M340,173 Q349,164 360,173" stroke="#f0c8c0" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M354,168 Q363,159 372,168" stroke="#f0c8c0" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- Head (drawn on top of ears) -->
+  <!-- Left ear outer (white) -->
+  <polygon points="142,205 163,105 228,180" fill="white"/>
+  <!-- Right ear outer (white) -->
+  <polygon points="228,180 293,105 314,205" fill="white"/>
+  <!-- Left ear inner (pink) -->
+  <polygon points="163,195 178,128 220,180" fill="#ffb3a7"/>
+  <!-- Right ear inner (pink) -->
+  <polygon points="236,180 278,128 293,195" fill="#ffb3a7"/>
+
+  <!-- Head circle -->
+  <circle cx="228" cy="232" r="100" fill="white"/>
+
+  <!-- Forehead stripe (lucky cat detail - 3 thin lines) -->
+  <path d="M218,148 Q228,140 238,148" stroke="#f0c8c0" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M213,160 Q228,150 243,160" stroke="#f0c8c0" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- ── Face ── -->
+  <!-- Eyes (happy closed arches) -->
+  <path d="M185,228 Q200,210 217,228" stroke="#3a2e1e" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+  <path d="M239,228 Q256,210 273,228" stroke="#3a2e1e" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Nose (small pink triangle) -->
+  <polygon points="226,248 235,260 217,260" fill="#ffb3a7"/>
+
+  <!-- Mouth -->
+  <path d="M217,262 Q228,273 239,262" stroke="#3a2e1e" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Blush circles -->
+  <circle cx="178" cy="268" r="20" fill="url(#blush)"/>
+  <circle cx="278" cy="268" r="20" fill="url(#blush)"/>
+
+  <!-- Whiskers left -->
+  <line x1="154" y1="250" x2="208" y2="255" stroke="#3a2e1e" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+  <line x1="154" y1="263" x2="208" y2="263" stroke="#3a2e1e" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+  <!-- Whiskers right -->
+  <line x1="248" y1="255" x2="302" y2="250" stroke="#3a2e1e" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+  <line x1="248" y1="263" x2="302" y2="263" stroke="#3a2e1e" stroke-width="2.5" stroke-linecap="round" opacity="0.35"/>
+
+  <!-- ── Collar & Bib ── -->
+  <!-- Gold collar -->
+  <path d="M138,312 Q228,338 318,312 L312,350 Q228,372 144,350 Z" fill="#f5c400"/>
+  <!-- Collar shine -->
+  <path d="M150,318 Q228,340 306,318" stroke="#ffe566" stroke-width="3" fill="none" opacity="0.6" stroke-linecap="round"/>
+
+  <!-- Bell body -->
+  <circle cx="228" cy="332" r="16" fill="#d4a800"/>
+  <!-- Bell highlight -->
+  <circle cx="222" cy="326" r="4" fill="#ffe566" opacity="0.7"/>
+  <!-- Bell slit -->
+  <path d="M220,340 Q228,348 236,340" stroke="#8a6800" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+  <!-- White bib on chest -->
+  <ellipse cx="228" cy="382" rx="62" ry="42" fill="white"/>
+
+  <!-- Koban coin (optional lucky cat detail on paw area) -->
+  <ellipse cx="356" cy="186" rx="30" ry="24" fill="white"/>
 </svg>
