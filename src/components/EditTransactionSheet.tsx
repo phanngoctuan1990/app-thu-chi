@@ -316,7 +316,7 @@ export default function EditTransactionSheet({ tx, month, onClose, onUpdated, on
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Ghi chú..."
-              className="bg-transparent border-none outline-none w-full font-body text-on-surface placeholder:text-outline/50 text-sm"
+              className="bg-transparent border-none outline-none w-full font-body text-on-surface placeholder:text-outline/50 text-base"
             />
           </div>
 
