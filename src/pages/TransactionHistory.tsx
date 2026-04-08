@@ -225,62 +225,78 @@ export default function TransactionHistory() {
           </button>
         </div>
 
-        {/* ── Bento stats (re-animate on month change) ── */}
-        <div key={`stats-${month}`} className="grid grid-cols-2 gap-4">
-          {/* Left column */}
-          <div className="flex flex-col gap-4">
-            <div className="bg-gradient-to-br from-primary to-[#881a00] rounded-[24px] p-5 flex flex-col justify-between aspect-square relative overflow-hidden animate-fade-up">
-              <span
-                className="absolute bottom-0 right-1 font-black leading-none pointer-events-none select-none text-white/[0.07]"
-                style={{ fontSize: 64 }}
-              >
-                {month}
-              </span>
-              <div className="w-9 h-9 rounded-[10px] overflow-hidden opacity-90">
+        {/* ── Stats (re-animate on month change) ── */}
+        <div key={`stats-${month}`} className="flex flex-col gap-3">
+
+          {/* Tổng chi tiêu — compact horizontal banner */}
+          <div className="bg-gradient-to-r from-primary to-[#7a1700] rounded-[24px] px-5 py-4 flex items-center justify-between relative overflow-hidden animate-fade-up"
+            style={{ boxShadow: '0 8px 24px -4px rgba(191,42,2,0.35)' }}>
+            {/* Month watermark */}
+            <span className="absolute right-4 inset-y-0 flex items-center font-black text-white/[0.06] pointer-events-none select-none leading-none" style={{ fontSize: 88 }}>
+              {month}
+            </span>
+            {/* Left: icon + label */}
+            <div className="flex items-center gap-3 relative z-10">
+              <div className="w-9 h-9 rounded-[10px] overflow-hidden shrink-0 bg-white shadow-sm">
                 <img src="/icon.svg" alt="" className="w-full h-full object-cover" />
               </div>
-              <div>
-                <p className="font-headline text-xs text-on-primary/80 mb-1">Tổng chi tiêu</p>
-                <p className="font-label text-xl font-bold text-on-primary leading-none">
-                  {loading
-                    ? <span className="skeleton h-5 w-16 inline-block opacity-30" />
-                    : formatVNDShort(summary?.totalSpent ?? 0)
-                  }
-                </p>
-              </div>
+              <span className="font-headline text-sm text-white/75 leading-tight">Tổng chi<br/>tiêu</span>
+            </div>
+            {/* Amount */}
+            <span className="font-label font-bold text-[26px] text-white relative z-10 leading-none">
+              {loading
+                ? <span className="skeleton h-6 w-20 inline-block rounded opacity-30" />
+                : formatVNDShort(summary?.totalSpent ?? 0)
+              }
+            </span>
+          </div>
+
+          {/* 2×2 grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Thu nhập */}
+            <div className="bg-surface-container-lowest rounded-[20px] p-4 bento-shadow-sm animate-fade-up delay-100">
+              <p className="font-headline text-[10px] text-outline uppercase tracking-wider mb-1.5">Thu nhập</p>
+              <p className="font-label text-lg font-bold text-secondary leading-none">
+                {loading ? <span className="skeleton h-5 w-16 inline-block" /> : formatVNDShort(summary?.income ?? 0)}
+              </p>
             </div>
 
-            {todaySpent !== null && (
-              <div className="bg-primary/10 rounded-[20px] p-4 flex flex-col justify-center bento-shadow-sm animate-fade-up delay-50">
-                <p className="font-headline text-[10px] text-primary uppercase tracking-wider mb-1">Hôm nay</p>
+            {/* Hôm nay (current month only) */}
+            {todaySpent !== null ? (
+              <div className="bg-primary/10 rounded-[20px] p-4 bento-shadow-sm animate-fade-up delay-150">
+                <p className="font-headline text-[10px] text-primary uppercase tracking-wider mb-1.5">Hôm nay</p>
                 <p className="font-label text-lg font-bold text-primary leading-none">
-                  {loading
-                    ? <span className="skeleton h-5 w-14 inline-block" />
-                    : formatVNDShort(todaySpent)
-                  }
+                  {loading ? <span className="skeleton h-5 w-14 inline-block" /> : formatVNDShort(todaySpent)}
+                </p>
+              </div>
+            ) : (
+              <div className="bg-surface-container-lowest rounded-[20px] p-4 bento-shadow-sm animate-fade-up delay-150">
+                <p className="font-headline text-[10px] text-outline uppercase tracking-wider mb-1.5">Tiết kiệm</p>
+                <p className="font-label text-lg font-bold text-primary leading-none">
+                  {loading ? <span className="skeleton h-5 w-16 inline-block" /> : formatVNDShort(summary?.categories?.['Tiết kiệm'] ?? 0)}
                 </p>
               </div>
             )}
-          </div>
 
-          {/* Right column */}
-          <div className="flex flex-col gap-4">
-            {[
-              { label: 'Thu nhập', value: summary?.income ?? 0, color: 'text-secondary', delay: 'delay-100' },
-              { label: 'Tiết kiệm', value: summary?.categories?.['Tiết kiệm'] ?? 0, color: 'text-primary', delay: 'delay-150' },
-              { label: 'Đầu tư', value: summary?.categories?.['Đầu tư'] ?? 0, color: 'text-on-surface', delay: 'delay-200' },
-            ].map(({ label, value, color, delay }) => (
-              <div key={label} className={`bg-surface-container-lowest rounded-[20px] p-4 flex-1 flex flex-col justify-center bento-shadow-sm animate-fade-up ${delay}`}>
-                <p className="font-headline text-[10px] text-outline uppercase tracking-wider mb-1">{label}</p>
-                <p className={`font-label text-lg font-bold ${color} leading-none`}>
-                  {loading
-                    ? <span className="skeleton h-5 w-16 inline-block" />
-                    : formatVNDShort(value)
-                  }
+            {/* Tiết kiệm (only alongside Hôm nay) */}
+            {todaySpent !== null && (
+              <div className="bg-surface-container-lowest rounded-[20px] p-4 bento-shadow-sm animate-fade-up delay-150">
+                <p className="font-headline text-[10px] text-outline uppercase tracking-wider mb-1.5">Tiết kiệm</p>
+                <p className="font-label text-lg font-bold text-primary leading-none">
+                  {loading ? <span className="skeleton h-5 w-16 inline-block" /> : formatVNDShort(summary?.categories?.['Tiết kiệm'] ?? 0)}
                 </p>
               </div>
-            ))}
+            )}
+
+            {/* Đầu tư */}
+            <div className="bg-surface-container-lowest rounded-[20px] p-4 bento-shadow-sm animate-fade-up delay-200">
+              <p className="font-headline text-[10px] text-outline uppercase tracking-wider mb-1.5">Đầu tư</p>
+              <p className="font-label text-lg font-bold text-on-surface leading-none">
+                {loading ? <span className="skeleton h-5 w-16 inline-block" /> : formatVNDShort(summary?.categories?.['Đầu tư'] ?? 0)}
+              </p>
+            </div>
           </div>
+
         </div>
 
         {/* ── Timeline (re-animate on month change) ── */}
