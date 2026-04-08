@@ -127,17 +127,9 @@ export default function SplashScreen({ onDone }: Props) {
         <div className={`relative z-10 flex flex-col items-center text-center gap-7 px-8 transition-opacity duration-300 ${ready ? 'opacity-100' : 'opacity-0'}`}>
 
           {/* Logo */}
-          <div className="splash-logo w-[88px] h-[88px] bg-white rounded-[24px] flex items-center justify-center"
+          <div className="splash-logo w-[88px] h-[88px] rounded-[24px] overflow-hidden"
             style={{ boxShadow: '0 24px 40px -8px rgba(56,57,41,0.12), 0 4px 12px rgba(56,57,41,0.06)' }}>
-            <span
-              className="material-symbols-outlined text-primary"
-              style={{
-                fontSize: 44,
-                fontVariationSettings: "'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 48",
-              }}
-            >
-              account_balance_wallet
-            </span>
+            <img src="/icon.svg" alt="Thu Chi" className="w-full h-full object-cover" />
           </div>
 
           {/* Title */}

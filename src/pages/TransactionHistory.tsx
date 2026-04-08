@@ -234,10 +234,9 @@ export default function TransactionHistory() {
               >
                 {month}
               </span>
-              <span className="material-symbols-outlined text-on-primary text-[28px]"
-                style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
-                account_balance_wallet
-              </span>
+              <div className="w-9 h-9 rounded-[10px] overflow-hidden opacity-90">
+                <img src="/icon.svg" alt="" className="w-full h-full object-cover" />
+              </div>
               <div>
                 <p className="font-headline text-xs text-on-primary/80 mb-1">Tổng chi tiêu</p>
                 <p className="font-label text-xl font-bold text-on-primary leading-none">

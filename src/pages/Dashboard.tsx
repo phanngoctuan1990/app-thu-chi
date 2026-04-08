@@ -460,11 +460,8 @@ export default function Dashboard() {
               <div className="absolute -right-6 -bottom-6 w-36 h-36 bg-primary/6 rounded-full blur-3xl pointer-events-none" />
               <div className="relative z-10">
                 <div className="flex justify-between items-start mb-4">
-                  <div className="bg-primary/10 text-primary p-2 rounded-full">
-                    <span className="material-symbols-outlined text-[20px]"
-                      style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
-                      account_balance_wallet
-                    </span>
+                  <div className="w-9 h-9 rounded-[10px] overflow-hidden bento-shadow-sm">
+                    <img src="/icon.svg" alt="" className="w-full h-full object-cover" />
                   </div>
                   <span className="bg-secondary/10 text-secondary px-2 py-0.5 rounded-full font-label text-[10px] font-medium">
                     Tháng này
