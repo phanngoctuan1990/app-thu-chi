@@ -75,6 +75,7 @@ function doGet(e) {
   try {
     if (p.action === 'summary')      return json(getSummary(p.sheetId, +p.month));
     if (p.action === 'transactions') return json(getTransactions(p.sheetId, +p.month));
+    if (p.action === 'getAllData')   return json(getAllData(p.sheetId));
     if (p.action === 'lookupCode')   return json(lookupInviteCode(p.code));
     if (p.action === 'generateCode') return json(generateInviteCode(p.sheetId));
     if (p.action === 'initTemplate') return json(initTemplate(p.sheetId));
@@ -127,7 +128,10 @@ function getBlockTotal(sheet, cat) {
 // ── Summary ───────────────────────────────────────────────────────────────────
 
 function getSummary(sheetId, month) {
-  var ss = openSS(sheetId);
+  return getSummaryFromSS(openSS(sheetId), month);
+}
+
+function getSummaryFromSS(ss, month) {
   var sheet = ss.getSheetByName('Tháng ' + month);
   if (!sheet) return { month: month, income: 0, totalSpent: 0, categories: {} };
 
@@ -156,7 +160,10 @@ function getSummary(sheetId, month) {
 // ── Transactions ──────────────────────────────────────────────────────────────
 
 function getTransactions(sheetId, month) {
-  var ss = openSS(sheetId);
+  return getTransactionsFromSS(openSS(sheetId), month);
+}
+
+function getTransactionsFromSS(ss, month) {
   var sheet = ss.getSheetByName('Tháng ' + month);
   if (!sheet) return { transactions: [] };
 
@@ -184,6 +191,20 @@ function getTransactions(sheetId, month) {
 
   txs.sort(function(a, b) { return b.day - a.day; });
   return { transactions: txs };
+}
+
+// ── Get all months in one call ────────────────────────────────────────────────
+
+function getAllData(sheetId) {
+  var ss = openSS(sheetId);
+  var currentMonth = new Date().getMonth() + 1;
+  var months = {};
+  for (var m = 1; m <= currentMonth; m++) {
+    var txData = getTransactionsFromSS(ss, m);
+    var sumData = getSummaryFromSS(ss, m);
+    months[m] = { summary: sumData, transactions: txData.transactions };
+  }
+  return { months: months };
 }
 
 // ── Add row ───────────────────────────────────────────────────────────────────

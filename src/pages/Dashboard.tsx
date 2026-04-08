@@ -12,6 +12,7 @@ import {
 import { useBudget } from '../hooks/useBudget'
 import { useSavingsGoal } from '../hooks/useSavingsGoal'
 import { useCurrency } from '../hooks/useCurrency'
+import { useSyncContext } from '../contexts/SyncContext'
 
 // ─── AnimatedNumber ───────────────────────────────────────────────────────────
 function AnimatedNumber({
@@ -396,12 +397,13 @@ export default function Dashboard() {
   const { threshold } = useBudget()
   const { goal } = useSavingsGoal()
   const { formatShort, currency } = useCurrency()
+  const { lastSync } = useSyncContext()
 
   useEffect(() => {
     fetchSummary().then(s => { setSummary(s); setLoading(false) }).catch(() => setLoading(false))
     fetchTransactions(currentMonth).then(setTxs).catch(console.error)
     fetchSummary(lastMonth).then(setLastSummary).catch(console.error)
-  }, [])
+  }, [lastSync])
 
   const year = now.getFullYear()
   const month = summary?.month ?? currentMonth

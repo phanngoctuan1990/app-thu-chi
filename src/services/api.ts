@@ -1,7 +1,7 @@
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const API_URL = (import.meta.env.VITE_GAS_URL as string | undefined)
-  || 'https://script.google.com/macros/s/AKfycbzTj8OzpfRMgYGIUccq33Zf7r_x-nJlr0cdkPWmiKd75hOGe-mI5V-irynEY5moOuYUQw/exec'
+  || 'https://script.google.com/macros/s/AKfycbwYQ-_BuspMzxqtacWJSMjSSS9iIXl8SYHhwP9c1ua4injO4vPUlpkb4CIKXIqWRdo6ag/exec'
 
 // Maps English category IDs → Vietnamese names stored in GAS
 const CATEGORY_VI: Record<string, string> = {
@@ -34,10 +34,10 @@ export interface Summary {
 
 export interface TxRecord {
   day: number
-  category: string   // English ID
+  category: string   // Vietnamese name
   note: string
   amount: number     // negative = expense, positive = income
-  user?: string      // who entered this (multi-tenant)
+  user?: string
 }
 
 // ─── Auth context helpers ─────────────────────────────────────────────────────
@@ -56,42 +56,20 @@ function getUserName(): string {
   } catch { return '' }
 }
 
-// ─── Cache ────────────────────────────────────────────────────────────────────
-
-const CACHE_TTL = 5 * 60 * 1000
+// ─── Cache (no TTL — data is fresh only after explicit sync) ──────────────────
 
 function cacheGet<T>(key: string): T | null {
   try {
     const raw = localStorage.getItem(key)
     if (!raw) return null
-    const { data, ts } = JSON.parse(raw)
-    if (Date.now() - ts > CACHE_TTL) return null
-    return data as T
+    const parsed = JSON.parse(raw)
+    // Support both old {data, ts} format and new {data} format
+    return (parsed.data !== undefined ? parsed.data : parsed) as T
   } catch { return null }
 }
 
 function cacheSet(key: string, data: unknown) {
-  try { localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() })) } catch {}
-}
-
-export function cacheInvalidate(month: number) {
-  const sheetId = getSheetId()
-  localStorage.removeItem(`summary_${sheetId}_${month}`)
-  localStorage.removeItem(`transactions_${sheetId}_${month}`)
-}
-
-export function cacheRemoveTx(month: number, tx: TxRecord) {
-  const sheetId = getSheetId()
-  const key = `transactions_${sheetId}_${month}`
-  try {
-    const raw = localStorage.getItem(key)
-    if (!raw) return
-    const { data, ts } = JSON.parse(raw)
-    const filtered = (data as TxRecord[]).filter(t =>
-      !(t.day === tx.day && t.note === tx.note && t.amount === tx.amount && t.category === tx.category)
-    )
-    localStorage.setItem(key, JSON.stringify({ data: filtered, ts }))
-  } catch {}
+  try { localStorage.setItem(key, JSON.stringify({ data })) } catch {}
 }
 
 export function getCachedSummary(month?: number): Summary | null {
@@ -105,61 +83,127 @@ export function getCachedTransactions(month: number): TxRecord[] | null {
   return cacheGet<TxRecord[]>(`transactions_${sheetId}_${month}`)
 }
 
-// ─── Fetchers ─────────────────────────────────────────────────────────────────
+// ─── No-ops kept for backward compat (optimistic updates handle cache now) ───
+
+export function cacheInvalidate(_month: number) { /* no-op */ }
+export function cacheRemoveTx(_month: number, _tx: TxRecord) { /* no-op */ }
+
+// ─── Local-only reads (no network) ───────────────────────────────────────────
 
 export async function fetchSummary(month?: number): Promise<Summary> {
   const m = month ?? new Date().getMonth() + 1
-  const sheetId = getSheetId()
-  const key = `summary_${sheetId}_${m}`
-  const cached = cacheGet<Summary>(key)
-  if (cached) return cached
-
-  const params = new URLSearchParams({ action: 'summary', month: String(m) })
-  if (sheetId) params.set('sheetId', sheetId)
-  const res = await fetch(`${API_URL}?${params}`)
-  const json = await res.json()
-  if (json.error) throw new Error(json.error)
-  cacheSet(key, json)
-  return json as Summary
+  return getCachedSummary(m) ?? { month: m, income: 0, totalSpent: 0, categories: {} }
 }
 
 export async function fetchTransactions(month: number): Promise<TxRecord[]> {
-  const sheetId = getSheetId()
-  const key = `transactions_${sheetId}_${month}`
-  const cached = cacheGet<TxRecord[]>(key)
-  if (cached) return cached
+  return getCachedTransactions(month) ?? []
+}
 
-  const params = new URLSearchParams({ action: 'transactions', month: String(month) })
-  if (sheetId) params.set('sheetId', sheetId)
+// ─── Sync all data from GAS (splash + manual sync button) ────────────────────
+
+export async function syncAllData(
+  onProgress?: (pct: number, status: string) => void
+): Promise<void> {
+  const sheetId = getSheetId()
+  if (!sheetId) return
+
+  onProgress?.(10, 'Đang kết nối...')
+
+  const params = new URLSearchParams({ action: 'getAllData', sheetId })
   const res = await fetch(`${API_URL}?${params}`)
+  onProgress?.(65, 'Đang tải dữ liệu...')
+
   const json = await res.json()
   if (json.error) throw new Error(json.error)
-  const txs = (json.transactions ?? []) as TxRecord[]
-  cacheSet(key, txs)
-  return txs
+
+  onProgress?.(85, 'Đang lưu...')
+  const months = json.months as Record<string, { summary: Summary; transactions: TxRecord[] }>
+
+  for (const [m, data] of Object.entries(months)) {
+    const month = Number(m)
+    cacheSet(`summary_${sheetId}_${month}`, data.summary)
+    cacheSet(`transactions_${sheetId}_${month}`, data.transactions)
+  }
+
+  onProgress?.(100, 'Hoàn tất!')
 }
+
+// ─── Compute summary from local transactions ──────────────────────────────────
+
+function computeSummaryFromTransactions(txs: TxRecord[], month: number): Summary {
+  const NON_SPENDING = new Set(['Tiết kiệm', 'Đầu tư'])
+  const cats: Record<string, number> = {}
+  let income = 0
+  let totalSpent = 0
+
+  txs.forEach(tx => {
+    if (tx.amount > 0) {
+      income += tx.amount
+    } else {
+      const abs = Math.abs(tx.amount)
+      cats[tx.category] = (cats[tx.category] ?? 0) + abs
+      if (!NON_SPENDING.has(tx.category)) totalSpent += abs
+    }
+  })
+
+  return { month, income, totalSpent, categories: cats }
+}
+
+// ─── Add transaction (optimistic localStorage + async GAS) ───────────────────
 
 export async function addTransaction(data: Transaction): Promise<void> {
   const sheetId = getSheetId()
+  const month = parseInt(data.date.split('-')[1], 10)
+  const day = parseInt(data.date.split('-')[2], 10)
+  const catVi = CATEGORY_VI[data.category] ?? data.category
+  const isIncome = data.category === 'Income'
+
+  // Build local TxRecord
+  const txRecord: TxRecord = {
+    day,
+    category: catVi,
+    note: data.note || catVi,
+    amount: isIncome ? data.amount : -data.amount,
+  }
+
+  // Optimistic: update localStorage immediately
+  const existing = getCachedTransactions(month) ?? []
+  const updated = [...existing, txRecord].sort((a, b) => b.day - a.day)
+  cacheSet(`transactions_${sheetId}_${month}`, updated)
+  cacheSet(`summary_${sheetId}_${month}`, computeSummaryFromTransactions(updated, month))
+
+  // Async: fire-and-forget to GAS
   const payload = {
     date:      data.date,
     amount:    data.amount,
-    category:  CATEGORY_VI[data.category] ?? data.category,
+    category:  catVi,
     note:      data.note,
     sheetId,
     userName:  getUserName(),
     timestamp: new Date().toISOString(),
   }
-  await fetch(API_URL, {
+  fetch(API_URL, {
     method:  'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body:    JSON.stringify(payload),
     mode:    'no-cors',
-  })
+  }).catch(() => {})
 }
+
+// ─── Delete transaction (optimistic localStorage + async GAS) ────────────────
 
 export async function deleteTransaction(tx: TxRecord, month: number): Promise<void> {
   const sheetId = getSheetId()
+
+  // Optimistic: remove from localStorage immediately
+  const existing = getCachedTransactions(month) ?? []
+  const updated = existing.filter(t =>
+    !(t.day === tx.day && t.note === tx.note && t.amount === tx.amount && t.category === tx.category)
+  )
+  cacheSet(`transactions_${sheetId}_${month}`, updated)
+  cacheSet(`summary_${sheetId}_${month}`, computeSummaryFromTransactions(updated, month))
+
+  // Async: fire-and-forget to GAS
   const payload = {
     action:   'delete',
     month,
@@ -169,12 +213,12 @@ export async function deleteTransaction(tx: TxRecord, month: number): Promise<vo
     amount:   Math.abs(tx.amount),
     sheetId,
   }
-  await fetch(API_URL, {
+  fetch(API_URL, {
     method:  'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body:    JSON.stringify(payload),
     mode:    'no-cors',
-  })
+  }).catch(() => {})
 }
 
 // ─── Invite codes ─────────────────────────────────────────────────────────────

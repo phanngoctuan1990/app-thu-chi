@@ -4,7 +4,8 @@ import NotificationSheet from '../components/NotificationSheet'
 import EditTransactionSheet from '../components/EditTransactionSheet'
 import FAB from '../components/FAB'
 import { formatVND, formatVNDShort } from '../utils/formatCurrency'
-import { cacheInvalidate, cacheRemoveTx, deleteTransaction, fetchSummary, fetchTransactions, getCachedSummary, getCachedTransactions, type TxRecord, type Summary } from '../services/api'
+import { deleteTransaction, fetchSummary, fetchTransactions, getCachedSummary, getCachedTransactions, type TxRecord, type Summary } from '../services/api'
+import { useSyncContext } from '../contexts/SyncContext'
 
 // ─── Category meta ────────────────────────────────────────────────────────────
 const CAT_META: Record<string, { icon: string; iconBg: string; iconColor: string; label: string }> = {
@@ -128,13 +129,15 @@ export default function TransactionHistory() {
   const [txList, setTxList] = useState<TxRecord[]>(() => getCachedTransactions(CURRENT_MONTH) ?? [])
   const [loading, setLoading] = useState(() => getCachedSummary(CURRENT_MONTH) === null)
 
+  const { lastSync } = useSyncContext()
+
   function handleDelete(tx: TxRecord) {
     setTxList(prev => prev.filter(t =>
       !(t.day === tx.day && t.note === tx.note && t.amount === tx.amount && t.category === tx.category)
     ))
-    cacheRemoveTx(month, tx)
-    cacheInvalidate(month)
     deleteTransaction(tx, month).catch(() => {})
+    // Re-read updated summary from localStorage
+    fetchSummary(month).then(setSummary).catch(() => {})
   }
 
   function handleUpdated(oldTx: TxRecord, newTx: TxRecord) {
@@ -145,7 +148,6 @@ export default function TransactionHistory() {
       return [...filtered, newTx].sort((a, b) => b.day - a.day)
     })
     setEditingTx(null)
-    // Refresh summary from network after edit
     fetchSummary(month).then(setSummary).catch(() => {})
   }
 
@@ -157,7 +159,7 @@ export default function TransactionHistory() {
       .then(([s, txs]) => { setSummary(s); setTxList(txs) })
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [month])
+  }, [month, lastSync])
 
   const todaySpent = month === CURRENT_MONTH
     ? txList.filter(tx => tx.day === CURRENT_DAY && tx.amount < 0).reduce((s, tx) => s + Math.abs(tx.amount), 0)

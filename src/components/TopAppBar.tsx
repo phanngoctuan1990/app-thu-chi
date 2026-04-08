@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useBudget } from '../hooks/useBudget'
 import { getCachedSummary } from '../services/api'
+import { useSyncContext } from '../contexts/SyncContext'
 import SettingsSheet from './SettingsSheet'
 
 interface TopAppBarProps {
@@ -11,6 +12,7 @@ interface TopAppBarProps {
 
 export default function TopAppBar({ title, subtitle, onBellPress }: TopAppBarProps) {
   const { getAlertLevel } = useBudget()
+  const { syncing, triggerSync } = useSyncContext()
   const [showSettings, setShowSettings] = useState(false)
 
   const currentMonth = new Date().getMonth() + 1
@@ -46,6 +48,21 @@ export default function TopAppBar({ title, subtitle, onBellPress }: TopAppBarPro
 
           {/* Action buttons */}
           <div className="flex items-center gap-2">
+            {/* Sync button */}
+            <button
+              onClick={() => triggerSync()}
+              disabled={syncing}
+              className="w-9 h-9 rounded-full bg-surface-container-low bento-shadow-sm flex items-center justify-center text-on-surface-variant hover:opacity-70 active:scale-95 transition-all duration-150 disabled:opacity-40"
+              aria-label="Đồng bộ dữ liệu"
+            >
+              <span
+                className={`material-symbols-outlined text-[20px] ${syncing ? 'animate-spin' : ''}`}
+                style={syncing ? { animationDuration: '1s' } : undefined}
+              >
+                sync
+              </span>
+            </button>
+
             {/* Bell */}
             <button
               onClick={onBellPress}

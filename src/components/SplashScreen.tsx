@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fetchSummary, fetchTransactions } from '../services/api'
+import { syncAllData } from '../services/api'
 
 interface Props {
   onDone: () => void
@@ -18,7 +18,6 @@ export default function SplashScreen({ onDone }: Props) {
   }, [])
 
   useEffect(() => {
-    const month = new Date().getMonth() + 1
     const MIN_DURATION = 3000
 
     const ticker = setInterval(() => {
@@ -31,8 +30,11 @@ export default function SplashScreen({ onDone }: Props) {
     setStatus('Đang tải dữ liệu...')
 
     Promise.all([
-      fetchSummary(month),
-      fetchTransactions(month),
+      syncAllData((pct, status) => {
+        clearInterval(ticker)
+        setProgress(pct)
+        setStatus(status)
+      }),
       new Promise(resolve => setTimeout(resolve, MIN_DURATION)),
     ])
       .then(() => {

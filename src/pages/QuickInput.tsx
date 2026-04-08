@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import TopAppBar from '../components/TopAppBar'
-import { addTransaction, cacheInvalidate, fetchSummary, fetchTransactions, getCachedSummary, getCachedTransactions } from '../services/api'
+import { addTransaction, fetchSummary, fetchTransactions, getCachedSummary, getCachedTransactions } from '../services/api'
+import { useSyncContext } from '../contexts/SyncContext'
 import { formatVNDShort } from '../utils/formatCurrency'
 import BudgetAlert from '../components/BudgetAlert'
 import NotificationSheet from '../components/NotificationSheet'
@@ -257,6 +258,7 @@ export default function QuickInput() {
   const [selectedDate, setSelectedDate] = useState(() => today)
   const hiddenInputRef = useRef<HTMLInputElement>(null)
   const dateInputRef = useRef<HTMLInputElement>(null)
+  const { lastSync } = useSyncContext()
 
   function loadStats() {
     Promise.all([fetchSummary(), fetchTransactions(currentMonth)])
@@ -270,7 +272,7 @@ export default function QuickInput() {
       .catch(() => {})
   }
 
-  useEffect(() => { loadStats() }, [])
+  useEffect(() => { loadStats() }, [lastSync])
 
   const amount = rawAmount ? parseInt(rawAmount, 10) : 0
   const formatted = amount > 0 ? new Intl.NumberFormat('vi-VN').format(amount) : ''
@@ -403,7 +405,6 @@ export default function QuickInput() {
       setRawAmount('')
       setSelectedCategory(null)
       setNote('')
-      cacheInvalidate(currentMonth)
       loadStats()
       setTimeout(() => setSubmitState('idle'), 1200)
     } catch {
