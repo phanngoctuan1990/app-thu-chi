@@ -40,13 +40,8 @@ export default function LoginPage({ onLoggedIn }: Props) {
     <div className="min-h-dvh flex flex-col items-center justify-center px-6 bg-background animate-fade-in">
       {/* Logo */}
       <div className="flex flex-col items-center gap-6 mb-12 animate-fade-up">
-        <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-primary/15 to-primary-container/30 bento-shadow flex items-center justify-center">
-          <span
-            className="material-symbols-outlined text-primary text-[44px]"
-            style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 48" }}
-          >
-            account_balance_wallet
-          </span>
+        <div className="w-20 h-20 rounded-[28px] overflow-hidden bento-shadow">
+          <img src="/icon.svg" alt="Thu Chi" className="w-full h-full object-cover" />
         </div>
         <div className="text-center">
           <h1 className="font-headline font-black text-4xl text-on-surface tracking-tight">Thu Chi</h1>

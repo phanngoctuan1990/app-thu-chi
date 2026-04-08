@@ -26,13 +26,8 @@ export default function TopAppBar({ title, subtitle, onBellPress }: TopAppBarPro
         <div className="flex justify-between items-center px-6 py-4 animate-fade-in">
           {/* Logo + Title */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/15 to-primary-container/25 bento-shadow-sm flex items-center justify-center">
-              <span
-                className="material-symbols-outlined text-primary text-[22px]"
-                style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}
-              >
-                account_balance_wallet
-              </span>
+            <div className="w-10 h-10 rounded-full overflow-hidden bento-shadow-sm shrink-0">
+              <img src="/icon.svg" alt="Thu Chi" className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col">
               <h1 className="font-headline font-black text-xl tracking-tight text-on-surface leading-tight">
