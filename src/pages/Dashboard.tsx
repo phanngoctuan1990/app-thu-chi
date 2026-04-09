@@ -13,6 +13,7 @@ import { useBudget } from '../hooks/useBudget'
 import { useSavingsGoal } from '../hooks/useSavingsGoal'
 import { useCurrency } from '../hooks/useCurrency'
 import { useSyncContext } from '../contexts/SyncContext'
+import { CAT_BY_VI } from '../constants/categories'
 
 // ─── AnimatedNumber ───────────────────────────────────────────────────────────
 function AnimatedNumber({
@@ -214,28 +215,6 @@ function DonutChart({ compulsory, lifestyle, invest, total }: {
 }
 
 // ─── Top 3 Categories bar list ────────────────────────────────────────────────
-const CAT_COLOR: Record<string, string> = {
-  'Ăn uống sinh hoạt':    '#2e7d32',
-  'Mua hàng':             '#e65100',
-  'Phương tiện di chuyển':'#006064',
-  'Chi tiêu bắt buộc':    '#455a64',
-  'Đi chơi':              '#1565c0',
-  'Đầu tư':               '#6a1b9a',
-  'Tiết kiệm':            '#558b2f',
-  'Thu nhập':             '#880e4f',
-  'Chi tiêu khác':        '#f57f17',
-}
-const CAT_ICON: Record<string, string> = {
-  'Ăn uống sinh hoạt':    'restaurant',
-  'Mua hàng':             'shopping_bag',
-  'Phương tiện di chuyển':'directions_car',
-  'Chi tiêu bắt buộc':    'receipt_long',
-  'Đi chơi':              'celebration',
-  'Đầu tư':               'trending_up',
-  'Tiết kiệm':            'savings',
-  'Thu nhập':             'payments',
-  'Chi tiêu khác':        'more_horiz',
-}
 
 function TopCategoriesCard({ categories, fmt }: { categories: Record<string, number>; fmt: (n: number) => string }) {
   const top3 = Object.entries(categories)
@@ -258,8 +237,8 @@ function TopCategoriesCard({ categories, fmt }: { categories: Record<string, num
       </div>
       <div className="flex flex-col gap-4">
         {top3.map(([cat, val], i) => {
-          const color = CAT_COLOR[cat] ?? '#383929'
-          const icon = CAT_ICON[cat] ?? 'category'
+          const color = CAT_BY_VI[cat]?.hex ?? '#383929'
+          const icon = CAT_BY_VI[cat]?.icon ?? 'category'
           const barPct = (val / maxVal) * 100
 
           return (

@@ -6,71 +6,7 @@ import { formatVNDShort } from '../utils/formatCurrency'
 import BudgetAlert from '../components/BudgetAlert'
 import NotificationSheet from '../components/NotificationSheet'
 import { useBudget } from '../hooks/useBudget'
-
-// ─── Category definitions ────────────────────────────────────────────────────
-
-const CATEGORIES = [
-  { id: 'Meals',      label: 'Ăn uống',  icon: 'restaurant',    bg: 'bg-[#eef6ef]', iconBg: 'bg-[#c8e6c9]/60', iconColor: 'text-[#2e7d32]', textColor: 'text-[#1b5e20]', ringColor: 'ring-[#66bb6a]' },
-  { id: 'Shopping',   label: 'Mua hàng', icon: 'shopping_bag',  bg: 'bg-[#fff3e0]', iconBg: 'bg-[#ffe0b2]/60', iconColor: 'text-[#e65100]', textColor: 'text-[#bf360c]', ringColor: 'ring-[#ffa726]' },
-  { id: 'Transport',  label: 'Di chuyển',icon: 'directions_car', bg: 'bg-[#e0f7fa]', iconBg: 'bg-[#b2ebf2]/60', iconColor: 'text-[#006064]', textColor: 'text-[#004d40]', ringColor: 'ring-[#26c6da]' },
-  { id: 'Compulsory', label: 'Bắt buộc', icon: 'receipt_long',  bg: 'bg-[#eceff1]', iconBg: 'bg-[#cfd8dc]/60', iconColor: 'text-[#455a64]', textColor: 'text-[#263238]', ringColor: 'ring-[#78909c]' },
-  { id: 'Fun',        label: 'Vui chơi', icon: 'celebration',   bg: 'bg-[#e3f2fd]', iconBg: 'bg-[#bbdefb]/60', iconColor: 'text-[#1565c0]', textColor: 'text-[#0d47a1]', ringColor: 'ring-[#42a5f5]' },
-  { id: 'Invest',     label: 'Đầu tư',   icon: 'trending_up',   bg: 'bg-[#f3e5f5]', iconBg: 'bg-[#e1bee7]/60', iconColor: 'text-[#6a1b9a]', textColor: 'text-[#4a148c]', ringColor: 'ring-[#ab47bc]' },
-  { id: 'Savings',    label: 'Tiết kiệm',icon: 'savings',       bg: 'bg-[#f9fbe7]', iconBg: 'bg-[#f0f4c3]/60', iconColor: 'text-[#558b2f]', textColor: 'text-[#33691e]', ringColor: 'ring-[#aed581]' },
-  { id: 'Income',     label: 'Thu nhập', icon: 'payments',      bg: 'bg-[#fce4ec]', iconBg: 'bg-[#f8bbd0]/60', iconColor: 'text-[#880e4f]', textColor: 'text-[#4a0072]', ringColor: 'ring-[#ec407a]' },
-  { id: 'Other',      label: 'Khác',     icon: 'more_horiz',    bg: 'bg-[#fffde7]', iconBg: 'bg-[#fff9c4]/60', iconColor: 'text-[#f57f17]', textColor: 'text-[#e65100]', ringColor: 'ring-[#ffca28]' },
-] as const
-
-type CategoryId = (typeof CATEGORIES)[number]['id']
-
-// ─── Note suggestions ─────────────────────────────────────────────────────────
-
-const NOTE_SUGGESTIONS: { label: string; keys: string[] }[] = [
-  { label: 'Ăn sáng',          keys: ['an sang'] },
-  { label: 'Ăn trưa',          keys: ['an trua'] },
-  { label: 'Ăn tối',           keys: ['an toi'] },
-  { label: 'Ăn vặt',           keys: ['an vat'] },
-  { label: 'Ăn ngoài',         keys: ['an ngoai'] },
-  { label: 'Cà phê',           keys: ['ca phe', 'cf'] },
-  { label: 'Trà sữa',          keys: ['tra sua', 'ts'] },
-  { label: 'Sinh tố',          keys: ['sinh to'] },
-  { label: 'Nước uống',        keys: ['nuoc uong', 'nuoc'] },
-  { label: 'Phở',              keys: ['pho'] },
-  { label: 'Bún',              keys: ['bun'] },
-  { label: 'Cơm',              keys: ['com'] },
-  { label: 'Bánh mì',          keys: ['banh mi', 'banh'] },
-  { label: 'Bánh ngọt',        keys: ['banh ngot'] },
-  { label: 'Đổ xăng',         keys: ['do xang', 'do', 'xang'] },
-  { label: 'Grab',             keys: ['grab'] },
-  { label: 'Taxi',             keys: ['taxi', 'ta'] },
-  { label: 'Xe buýt',          keys: ['xe buyt', 'xe'] },
-  { label: 'Gửi xe',           keys: ['gui xe'] },
-  { label: 'Siêu thị',        keys: ['sieu thi', 'sieu'] },
-  { label: 'Winmart',          keys: ['winmart', 'win'] },
-  { label: 'Tạp hóa',         keys: ['tap hoa'] },
-  { label: 'Mua hàng',        keys: ['mua hang', 'mua'] },
-  { label: 'Quần áo',         keys: ['quan ao'] },
-  { label: 'Giày dép',        keys: ['giay dep'] },
-  { label: 'Mỹ phẩm',         keys: ['my pham'] },
-  { label: 'Tiền nhà',        keys: ['tien nha'] },
-  { label: 'Tiền điện',       keys: ['tien dien'] },
-  { label: 'Tiền nước',       keys: ['tien nuoc'] },
-  { label: 'Tiền internet',   keys: ['tien internet', 'inet'] },
-  { label: 'Tiền điện thoại', keys: ['tien dien thoai'] },
-  { label: 'Bảo hiểm',        keys: ['bao hiem'] },
-  { label: 'Xem phim',        keys: ['xem phim', 'phim'] },
-  { label: 'Karaoke',         keys: ['karaoke', 'kara'] },
-  { label: 'Du lịch',         keys: ['du lich'] },
-  { label: 'Gym',             keys: ['gym'] },
-  { label: 'Đám cưới',        keys: ['dam cuoi', 'dam'] },
-  { label: 'Momo',            keys: ['momo', 'mo'] },
-  { label: 'ZaloPay',         keys: ['zalopay', 'zalo'] },
-  { label: 'Lương',           keys: ['luong'] },
-  { label: 'Thưởng',          keys: ['thuong'] },
-  { label: 'Freelance',       keys: ['freelance', 'free'] },
-  { label: 'Thuốc',           keys: ['thuoc'] },
-  { label: 'Khám bệnh',       keys: ['kham benh', 'kham'] },
-]
+import { CATEGORIES, NOTE_SUGGESTIONS, type CategoryId } from '../constants/categories'
 
 function normalize(s: string) {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
@@ -114,13 +50,13 @@ function parseVoiceInput(raw: string): { amount: number; note: string } {
 
   // "X triệu Y trăm Z nghìn" — most specific 3-part, must be before 2-part
   tryMatch(/(\d+)\s*triệu\s+(\d+)\s*trăm\s+(\d+)\s*(?:nghìn|ngàn|k)?/i,
-    m => parseInt(m[1]) * 1_000_000 + parseInt(m[2]) * 100_000 + parseInt(m[3]) * 1_000)
+    m => parseInt(m[1], 10) * 1_000_000 + parseInt(m[2], 10) * 100_000 + parseInt(m[3], 10) * 1_000)
   // "X triệu Y nghìn"
   tryMatch(/(\d+(?:[,.]\d+)?)\s*triệu\s+(\d+)\s*(?:nghìn|ngàn|k)?/i,
-    m => parseFloat(m[1].replace(',', '.')) * 1_000_000 + parseInt(m[2]) * 1_000)
+    m => parseFloat(m[1].replace(',', '.')) * 1_000_000 + parseInt(m[2], 10) * 1_000)
   // "X triệu rưỡi"
   tryMatch(/(\d+)\s*triệu\s*rưỡi/i,
-    m => parseInt(m[1]) * 1_000_000 + 500_000)
+    m => parseInt(m[1], 10) * 1_000_000 + 500_000)
   // "X triệu"
   tryMatch(/(\d+(?:[,.]\d+)?)\s*(?:triệu|tr)\b/i,
     m => parseFloat(m[1].replace(',', '.')) * 1_000_000)
@@ -128,11 +64,11 @@ function parseVoiceInput(raw: string): { amount: number; note: string } {
   tryMatch(/(\d+(?:[,.]\d+)?)\s*(?:nghìn|ngàn|k)\b/i,
     m => parseFloat(m[1].replace(',', '.')) * 1_000)
   // "X trăm"
-  tryMatch(/(\d+)\s*trăm\b/i, m => parseInt(m[1]) * 100)
-  // Vietnamese dot-separated: 29.100, 1.500.000 — max 2 dot-groups to avoid SR misformat (e.g. 1.000.250.000)
-  tryMatch(/\b(\d{1,3}(?:\.\d{3}){1,2})\b/, m => parseInt(m[1].replace(/\./g, '')))
+  tryMatch(/(\d+)\s*trăm\b/i, m => parseInt(m[1], 10) * 100)
+  // Vietnamese dot-separated: 29.100, 1.500.000
+  tryMatch(/\b(\d{1,3}(?:\.\d{3}){1,2})\b/, m => parseInt(m[1].replace(/\./g, ''), 10))
   // bare 4+ digit number
-  tryMatch(/\b(\d{4,})\b/, m => parseInt(m[1]))
+  tryMatch(/\b(\d{4,})\b/, m => parseInt(m[1], 10))
 
   const note = amountMatch
     ? text.replace(amountMatch, '').replace(/\s+/g, ' ').trim()
@@ -605,6 +541,34 @@ export default function QuickInput() {
           />
         </div>
 
+        {/* ── Note input ── */}
+        <div className="flex flex-col gap-2">
+          <div className="bg-surface-container-lowest border border-outline-variant/10 focus-within:ring-1 focus-within:ring-primary/30 rounded-full px-5 py-4 flex items-center gap-3 transition-all bento-shadow-sm">
+            <span className="material-symbols-outlined text-outline text-xl">edit_note</span>
+            <input
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Ghi chú? (Phở sáng, Grab đi làm...)"
+              className="bg-transparent border-none outline-none w-full font-body text-on-surface placeholder:text-outline/60 text-base"
+            />
+          </div>
+
+          {noteSuggestions.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto scrollbar-none px-1">
+              {noteSuggestions.map(s => (
+                <button
+                  key={s}
+                  onClick={() => setNote(s)}
+                  className="shrink-0 px-3 py-1.5 rounded-full bg-surface-container-lowest border border-outline-variant/20 font-body text-sm text-on-surface-variant active:scale-95 transition-transform duration-150 bento-shadow-sm"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* ── Category grid 3×3 ── */}
         <div className="grid grid-cols-3 gap-3">
           {CATEGORIES.map((cat, i) => {
@@ -639,34 +603,6 @@ export default function QuickInput() {
               </button>
             )
           })}
-        </div>
-
-        {/* ── Note input ── */}
-        <div className="flex flex-col gap-2">
-          <div className="bg-surface-container-lowest border border-outline-variant/10 focus-within:ring-1 focus-within:ring-primary/30 rounded-full px-5 py-4 flex items-center gap-3 transition-all bento-shadow-sm">
-            <span className="material-symbols-outlined text-outline text-xl">edit_note</span>
-            <input
-              type="text"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Ghi chú? (Phở sáng, Grab đi làm...)"
-              className="bg-transparent border-none outline-none w-full font-body text-on-surface placeholder:text-outline/60 text-base"
-            />
-          </div>
-
-          {noteSuggestions.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto scrollbar-none px-1">
-              {noteSuggestions.map(s => (
-                <button
-                  key={s}
-                  onClick={() => setNote(s)}
-                  className="shrink-0 px-3 py-1.5 rounded-full bg-surface-container-lowest border border-outline-variant/20 font-body text-sm text-on-surface-variant active:scale-95 transition-transform duration-150 bento-shadow-sm"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* ── Confirm button ── */}

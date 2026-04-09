@@ -6,20 +6,15 @@ import FAB from '../components/FAB'
 import { formatVND, formatVNDShort } from '../utils/formatCurrency'
 import { deleteTransaction, fetchSummary, fetchTransactions, getCachedSummary, getCachedTransactions, type TxRecord, type Summary } from '../services/api'
 import { useSyncContext } from '../contexts/SyncContext'
+import { CAT_BY_VI } from '../constants/categories'
 
-// ─── Category meta ────────────────────────────────────────────────────────────
-const CAT_META: Record<string, { icon: string; iconBg: string; iconColor: string; label: string }> = {
-  'Ăn uống sinh hoạt':     { icon: 'restaurant',           iconBg: 'bg-[#eef6ef]', iconColor: 'text-[#2e7d32]', label: 'Ăn uống' },
-  'Mua hàng':               { icon: 'shopping_bag',          iconBg: 'bg-[#fff3e0]', iconColor: 'text-[#e65100]', label: 'Mua hàng' },
-  'Chi tiêu bắt buộc':     { icon: 'receipt_long',           iconBg: 'bg-[#eceff1]', iconColor: 'text-[#455a64]', label: 'Bắt buộc' },
-  'Chi tiêu khác':         { icon: 'more_horiz',             iconBg: 'bg-[#fffde7]', iconColor: 'text-[#f57f17]', label: 'Khác' },
-  'Phương tiện di chuyển': { icon: 'directions_car',         iconBg: 'bg-[#e0f7fa]', iconColor: 'text-[#006064]', label: 'Di chuyển' },
-  'Đi chơi':               { icon: 'celebration',            iconBg: 'bg-[#e3f2fd]', iconColor: 'text-[#1565c0]', label: 'Vui chơi' },
-  'Đầu tư':                { icon: 'trending_up',            iconBg: 'bg-[#f3e5f5]', iconColor: 'text-[#6a1b9a]', label: 'Đầu tư' },
-  'Tiết kiệm':             { icon: 'savings',                iconBg: 'bg-[#f9fbe7]', iconColor: 'text-[#558b2f]', label: 'Tiết kiệm' },
-  'Thu nhập':              { icon: 'payments',               iconBg: 'bg-[#fce4ec]', iconColor: 'text-[#880e4f]', label: 'Thu nhập' },
-}
 const DEFAULT_META = { icon: 'receipt', iconBg: 'bg-surface-container', iconColor: 'text-outline', label: 'Khác' }
+
+function getCatMeta(category: string) {
+  const c = CAT_BY_VI[category]
+  if (!c) return DEFAULT_META
+  return { icon: c.icon, iconBg: c.iconBg, iconColor: c.iconColor, label: c.label }
+}
 
 // ─── Transaction row (swipe-to-delete) ───────────────────────────────────────
 const SWIPE_REVEAL = 72
@@ -27,7 +22,7 @@ const SWIPE_THRESHOLD = 48
 
 function TxRow({ tx, onDelete, onTap, index }: { tx: TxRecord; onDelete: () => void; onTap: () => void; index: number }) {
   const isIncome = tx.amount >= 0
-  const meta = CAT_META[tx.category] ?? DEFAULT_META
+  const meta = getCatMeta(tx.category)
   const [offsetX, setOffsetX] = useState(0)
   const [open, setOpen] = useState(false)
   const startXRef = useRef(0)

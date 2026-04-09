@@ -1,43 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { addTransaction, cacheInvalidate, deleteTransaction, type TxRecord } from '../services/api'
-
-// ─── Note suggestions (same as QuickInput) ────────────────────────────────────
-const NOTE_SUGGESTIONS: { label: string; keys: string[] }[] = [
-  { label: 'Ăn sáng',          keys: ['an sang'] },
-  { label: 'Ăn trưa',          keys: ['an trua'] },
-  { label: 'Ăn tối',           keys: ['an toi'] },
-  { label: 'Ăn vặt',           keys: ['an vat'] },
-  { label: 'Ăn ngoài',         keys: ['an ngoai'] },
-  { label: 'Cà phê',           keys: ['ca phe', 'cf'] },
-  { label: 'Trà sữa',          keys: ['tra sua', 'ts'] },
-  { label: 'Sinh tố',          keys: ['sinh to'] },
-  { label: 'Nước uống',        keys: ['nuoc uong', 'nuoc'] },
-  { label: 'Phở',              keys: ['pho'] },
-  { label: 'Bún',              keys: ['bun'] },
-  { label: 'Cơm',              keys: ['com'] },
-  { label: 'Bánh mì',          keys: ['banh mi', 'banh'] },
-  { label: 'Đổ xăng',         keys: ['do xang', 'xang'] },
-  { label: 'Grab',             keys: ['grab'] },
-  { label: 'Taxi',             keys: ['taxi', 'ta'] },
-  { label: 'Winmart',          keys: ['winmart', 'win'] },
-  { label: 'Siêu thị',        keys: ['sieu thi', 'sieu'] },
-  { label: 'Mua hàng',        keys: ['mua hang', 'mua'] },
-  { label: 'Tiền nhà',        keys: ['tien nha'] },
-  { label: 'Tiền điện',       keys: ['tien dien'] },
-  { label: 'Tiền nước',       keys: ['tien nuoc'] },
-  { label: 'Tiền internet',   keys: ['tien internet', 'inet'] },
-  { label: 'Bảo hiểm',        keys: ['bao hiem'] },
-  { label: 'Xem phim',        keys: ['xem phim', 'phim'] },
-  { label: 'Karaoke',         keys: ['karaoke', 'kara'] },
-  { label: 'Gym',             keys: ['gym'] },
-  { label: 'Đám cưới',        keys: ['dam cuoi', 'dam'] },
-  { label: 'Momo',            keys: ['momo', 'mo'] },
-  { label: 'Lương',           keys: ['luong'] },
-  { label: 'Thưởng',          keys: ['thuong'] },
-  { label: 'Freelance',       keys: ['freelance', 'free'] },
-  { label: 'Thuốc',           keys: ['thuoc'] },
-  { label: 'Khám bệnh',       keys: ['kham benh', 'kham'] },
-]
+import { addTransaction, deleteTransaction, type TxRecord } from '../services/api'
+import { CATEGORIES, CAT_BY_VI, NOTE_SUGGESTIONS, type CategoryId as CatId } from '../constants/categories'
 
 function normalize(s: string) {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
@@ -51,26 +14,6 @@ function formatSuggestion(n: number) {
   return `${n / 1000}k`
 }
 
-// ─── Category definitions (shared visual config) ───────────────────────────
-const CATEGORIES = [
-  { id: 'Meals',      viName: 'Ăn uống sinh hoạt',     label: 'Ăn uống',   icon: 'restaurant',          bg: '#eef6ef', iconColor: '#2e7d32', selBg: '#c8e6c9' },
-  { id: 'Shopping',   viName: 'Mua hàng',               label: 'Mua hàng',  icon: 'shopping_bag',         bg: '#fff3e0', iconColor: '#e65100', selBg: '#ffe0b2' },
-  { id: 'Transport',  viName: 'Phương tiện di chuyển',  label: 'Di chuyển', icon: 'directions_car',        bg: '#e0f7fa', iconColor: '#006064', selBg: '#b2ebf2' },
-  { id: 'Compulsory', viName: 'Chi tiêu bắt buộc',      label: 'Bắt buộc',  icon: 'receipt_long',          bg: '#eceff1', iconColor: '#455a64', selBg: '#cfd8dc' },
-  { id: 'Fun',        viName: 'Đi chơi',                label: 'Vui chơi',  icon: 'celebration',           bg: '#e3f2fd', iconColor: '#1565c0', selBg: '#bbdefb' },
-  { id: 'Invest',     viName: 'Đầu tư',                 label: 'Đầu tư',    icon: 'trending_up',           bg: '#f3e5f5', iconColor: '#6a1b9a', selBg: '#e1bee7' },
-  { id: 'Savings',    viName: 'Tiết kiệm',              label: 'Tiết kiệm', icon: 'savings',               bg: '#f9fbe7', iconColor: '#558b2f', selBg: '#dcedc8' },
-  { id: 'Income',     viName: 'Thu nhập',               label: 'Thu nhập',  icon: 'payments',              bg: '#fce4ec', iconColor: '#880e4f', selBg: '#f8bbd0' },
-  { id: 'Other',      viName: 'Chi tiêu khác',          label: 'Khác',      icon: 'more_horiz',            bg: '#fffde7', iconColor: '#f57f17', selBg: '#fff9c4' },
-] as const
-
-type CatId = (typeof CATEGORIES)[number]['id']
-
-// Map Vietnamese category name → English ID
-const VI_TO_ID: Record<string, CatId> = Object.fromEntries(
-  CATEGORIES.map(c => [c.viName, c.id])
-) as Record<string, CatId>
-
 interface Props {
   tx: TxRecord
   month: number
@@ -83,7 +26,7 @@ type SaveState = 'idle' | 'saving' | 'success' | 'error'
 
 export default function EditTransactionSheet({ tx, month, onClose, onUpdated, onDeleted }: Props) {
   const isIncome = tx.amount > 0
-  const initCatId = VI_TO_ID[tx.category] ?? 'Other'
+  const initCatId = (CAT_BY_VI[tx.category]?.id ?? 'Other') as CatId
   const initAmount = Math.abs(tx.amount)
 
   const [rawAmount, setRawAmount] = useState(String(initAmount))
@@ -96,7 +39,6 @@ export default function EditTransactionSheet({ tx, month, onClose, onUpdated, on
 
   const year = new Date().getFullYear()
   const maxDay = new Date(year, month, 0).getDate()
-  const today = new Date().getDate()
   const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 
   useEffect(() => {
@@ -146,7 +88,6 @@ export default function EditTransactionSheet({ tx, month, onClose, onUpdated, on
       // Delete old → add new
       await deleteTransaction(tx, month)
       await addTransaction({ date: dateStr, amount, category: catId, note })
-      cacheInvalidate(month)
 
       const newTx: TxRecord = {
         day,
@@ -166,7 +107,6 @@ export default function EditTransactionSheet({ tx, month, onClose, onUpdated, on
     setSaveState('saving')
     try {
       await deleteTransaction(tx, month)
-      cacheInvalidate(month)
       onDeleted(tx)
       handleClose()
     } catch {
@@ -352,7 +292,7 @@ export default function EditTransactionSheet({ tx, month, onClose, onUpdated, on
               </button>
               <span className="font-label font-bold text-sm text-on-surface w-6 text-center">{day}</span>
               <button
-                onClick={() => setDay(d => Math.min(Math.min(maxDay, today), d + 1))}
+                onClick={() => setDay(d => Math.min(maxDay, d + 1))}
                 className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-outline active:scale-90 transition-transform"
               >
                 <span className="material-symbols-outlined text-[16px]">add</span>
