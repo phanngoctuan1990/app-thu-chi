@@ -418,8 +418,10 @@ function generateInviteCode(sheetId) {
 
 function lookupInviteCode(code) {
   if (!code) throw new Error('code required');
-  var sheetId = PropertiesService.getScriptProperties().getProperty('invite_' + code);
+  var props = PropertiesService.getScriptProperties();
+  var sheetId = props.getProperty('invite_' + code);
   if (!sheetId) throw new Error('Mã mời không hợp lệ');
+  props.deleteProperty('invite_' + code);  // one-time use
   return { sheetId: sheetId };
 }
 

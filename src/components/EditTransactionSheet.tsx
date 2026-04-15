@@ -303,18 +303,21 @@ export default function EditTransactionSheet({ tx, month, onClose, onUpdated, on
 
         {/* ── Actions ── */}
         <div className="px-6 pb-6 flex flex-col gap-2">
+          {/* Save button — always visible, state-driven style */}
           <button
             onClick={handleSave}
-            disabled={amount <= 0 || saveState === 'saving' || !hasChanged}
-            className={`w-full py-4 rounded-full font-headline font-bold text-base shadow-sm active:scale-[0.98] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
-              saveState === 'success' ? 'bg-[#558b2f] text-white'
-              : saveState === 'error' ? 'bg-error text-on-error'
-              : 'text-white'
-            }`}
+            disabled={saveState === 'saving' || saveState === 'success'}
+            className="w-full py-4 rounded-full font-headline font-bold text-base active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
             style={
-              saveState === 'idle' || saveState === 'saving'
-                ? { background: `linear-gradient(135deg, ${selectedCat.iconColor}, ${selectedCat.iconColor}99)` }
-                : undefined
+              saveState === 'success'
+                ? { background: '#558b2f', color: '#fff', boxShadow: '0 6px 20px rgba(85,139,47,0.30)' }
+              : saveState === 'error'
+                ? { background: '#c62828', color: '#fff' }
+              : saveState === 'saving'
+                ? { background: 'linear-gradient(135deg, #bf2a02, #ff6b3d)', color: '#fff', opacity: 0.8 }
+              : !hasChanged || amount <= 0
+                ? { background: '#e8e8d8', color: '#9a9a80', cursor: 'not-allowed' }
+              : { background: 'linear-gradient(135deg, #bf2a02, #ff6b3d)', color: '#fff', boxShadow: '0 6px 20px rgba(191,42,2,0.28)' }
             }
           >
             {saveState === 'saving' ? (
@@ -324,18 +327,23 @@ export default function EditTransactionSheet({ tx, month, onClose, onUpdated, on
                 style={{ fontVariationSettings: "'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24" }}>check_circle</span>Đã cập nhật!</>
             ) : saveState === 'error' ? (
               <><span className="material-symbols-outlined text-xl">error</span>Lỗi, thử lại!</>
+            ) : !hasChanged || amount <= 0 ? (
+              <><span className="material-symbols-outlined text-lg"
+                style={{ fontVariationSettings: "'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24" }}>edit_off</span>Chưa có thay đổi</>
             ) : (
               <><span className="material-symbols-outlined text-lg"
-                style={{ fontVariationSettings: "'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24" }}>check</span>Cập nhật</>
+                style={{ fontVariationSettings: "'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24" }}>check</span>Lưu thay đổi</>
             )}
           </button>
 
           <button
             onClick={handleDelete}
             disabled={saveState === 'saving'}
-            className="w-full py-3 rounded-full font-body text-sm text-error/80 flex items-center justify-center gap-1.5 active:opacity-70 transition-opacity disabled:opacity-30"
+            className="w-full py-3 rounded-[14px] font-body text-sm text-error flex items-center justify-center gap-1.5 active:opacity-70 transition-opacity disabled:opacity-30"
+            style={{ background: 'rgba(198,40,40,0.07)' }}
           >
-            <span className="material-symbols-outlined text-[16px]">delete</span>
+            <span className="material-symbols-outlined text-[16px]"
+              style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>delete</span>
             Xóa giao dịch
           </button>
         </div>
