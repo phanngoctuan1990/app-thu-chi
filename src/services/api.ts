@@ -172,22 +172,17 @@ export async function addTransaction(data: Transaction): Promise<void> {
   cacheSet(`transactions_${sheetId}_${month}`, updated)
   cacheSet(`summary_${sheetId}_${month}`, computeSummaryFromTransactions(updated, month))
 
-  // Async: fire-and-forget to GAS
-  const payload = {
+  // Async: fire-and-forget to GAS via GET (POST gets redirected to Google login)
+  const params = new URLSearchParams({
+    action:    'add',
     date:      data.date,
-    amount:    data.amount,
+    amount:    String(data.amount),
     category:  catVi,
     note:      data.note,
     sheetId,
     userName:  getUserName(),
-    timestamp: new Date().toISOString(),
-  }
-  fetch(API_URL, {
-    method:  'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body:    JSON.stringify(payload),
-    mode:    'no-cors',
-  }).catch(() => {})
+  })
+  fetch(`${API_URL}?${params}`, { mode: 'no-cors' }).catch(() => {})
 }
 
 // ─── Delete transaction (optimistic localStorage + async GAS) ────────────────
@@ -203,22 +198,17 @@ export async function deleteTransaction(tx: TxRecord, month: number): Promise<vo
   cacheSet(`transactions_${sheetId}_${month}`, updated)
   cacheSet(`summary_${sheetId}_${month}`, computeSummaryFromTransactions(updated, month))
 
-  // Async: fire-and-forget to GAS
-  const payload = {
+  // Async: fire-and-forget to GAS via GET
+  const params = new URLSearchParams({
     action:   'delete',
-    month,
+    month:    String(month),
     category: tx.category,
-    day:      tx.day,
+    day:      String(tx.day),
     note:     tx.note,
-    amount:   Math.abs(tx.amount),
+    amount:   String(Math.abs(tx.amount)),
     sheetId,
-  }
-  fetch(API_URL, {
-    method:  'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body:    JSON.stringify(payload),
-    mode:    'no-cors',
-  }).catch(() => {})
+  })
+  fetch(`${API_URL}?${params}`, { mode: 'no-cors' }).catch(() => {})
 }
 
 // ─── Invite codes ─────────────────────────────────────────────────────────────

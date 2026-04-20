@@ -79,6 +79,8 @@ function doGet(e) {
     if (p.action === 'lookupCode')   return json(lookupInviteCode(p.code));
     if (p.action === 'generateCode') return json(generateInviteCode(p.sheetId));
     if (p.action === 'initTemplate') return json(initTemplate(p.sheetId));
+    if (p.action === 'add')          return json(addRowFromParams(p));
+    if (p.action === 'delete')       return json(deleteRowFromParams(p));
     return json({ error: 'Unknown action' });
   } catch(err) {
     return json({ error: err.message });
@@ -423,6 +425,27 @@ function lookupInviteCode(code) {
   if (!sheetId) throw new Error('Mã mời không hợp lệ');
   props.deleteProperty('invite_' + code);  // one-time use
   return { sheetId: sheetId };
+}
+
+function addRowFromParams(p) {
+  addRow(p.sheetId, {
+    date:     p.date,
+    amount:   +p.amount,
+    category: p.category,
+    note:     p.note || '',
+  });
+  return { ok: true };
+}
+
+function deleteRowFromParams(p) {
+  deleteRow(p.sheetId, {
+    month:    +p.month,
+    category: p.category,
+    day:      +p.day,
+    note:     p.note || '',
+    amount:   +p.amount,
+  });
+  return { ok: true };
 }
 
 function json(data) {
